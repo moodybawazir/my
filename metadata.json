@@ -1,0 +1,8 @@
+{
+  "name": "Baseerah AI SaaS Platform",
+  "description": "A high-end luxury SaaS platform for an AI automation agency, featuring glassmorphism, corporate aesthetics, and advanced dashboard capabilities.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
