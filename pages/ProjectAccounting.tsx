@@ -58,7 +58,7 @@ const ProjectAccounting: React.FC = () => {
                   {sub.description}
                 </p>
                 <div className="flex flex-wrap gap-4 mb-8">
-                  {sub.features.map((f, idx) => (
+                  {(sub.features || []).map((f, idx) => (
                     <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl text-sm text-[#cfd9cc]">
                       <CheckCircle2 size={16} className="text-emerald-500" />
                       {f}

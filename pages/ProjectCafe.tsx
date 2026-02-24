@@ -118,7 +118,7 @@ const ProjectCafe: React.FC = () => {
                 <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
 
                 <div className="space-y-3 mb-10">
-                  {sub.features.map((feature: string, idx: number) => (
+                  {(sub.features || []).map((feature: string, idx: number) => (
                     <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
                       <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
                         <CheckCircle2 size={12} className="text-emerald-400" />

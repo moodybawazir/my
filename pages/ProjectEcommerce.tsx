@@ -59,7 +59,7 @@ const ProjectEcommerce: React.FC = () => {
               <p className="text-white/60 mb-6 font-light">{sub.description}</p>
               <div className="text-xl font-black text-[#cfd9cc] mb-8">{sub.price}</div>
               <div className="w-full space-y-3 mt-auto">
-                {sub.features.map((f, idx) => (
+                {(sub.features || []).map((f: string, idx: number) => (
                   <div key={idx} className="flex items-center justify-center gap-2 text-xs text-white/40">
                     <CheckCircle2 size={12} className="text-emerald-500" />
                     {f}

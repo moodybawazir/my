@@ -141,9 +141,9 @@ const ProjectAI: React.FC = () => {
               <h3 className="text-2xl font-black text-white mb-4">{sub.title}</h3>
               <p className="text-[#cfd9cc]/40 leading-relaxed">{sub.description}</p>
               <div className="mt-8 pt-8 border-t border-white/5 space-y-3">
-                {sub.features.map((f, idx) => (
+                {(sub.features || []).map((f, idx) => (
                   <div key={idx} className="flex items-center justify-center gap-2 text-xs text-[#cfd9cc]/60">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
+                    <CheckCircle2 size={12} className="text-emerald-400" />
                     {f}
                   </div>
                 ))}
