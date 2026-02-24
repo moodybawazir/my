@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { 
+import {
   Cpu, Menu, X, LogIn, MapPin, Mail, Phone
 } from 'lucide-react';
 
@@ -33,14 +33,13 @@ export const Layout: React.FC = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`text-sm font-semibold transition-luxury hover:text-white ${
-                  location.pathname === link.path ? 'text-white border-b-2 border-[#cfd9cc] pb-1' : 'text-[#cfd9cc]/60'
-                }`}
+                className={`text-sm font-semibold transition-luxury hover:text-white ${location.pathname === link.path ? 'text-white border-b-2 border-[#cfd9cc] pb-1' : 'text-[#cfd9cc]/60'
+                  }`}
               >
                 {link.name}
               </Link>
             ))}
-            
+
             <div className="flex items-center gap-4 border-r border-white/10 pr-8 mr-2">
               <Link to="/login" className="text-sm font-bold text-[#cfd9cc] hover:text-white flex items-center gap-2 transition-luxury">
                 <LogIn size={18} /> دخول
@@ -102,18 +101,18 @@ export const Layout: React.FC = () => {
           <div>
             <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">التواصل الاستراتيجي</h4>
             <div className="space-y-6 text-[#cfd9cc]/60 text-sm font-medium">
-              <div className="flex items-center gap-4"><MapPin size={18} className="text-[#cfd9cc]/30"/> مكة المكرمة، المملكة العربية السعودية</div>
-              <div className="flex items-center gap-4"><Mail size={18} className="text-[#cfd9cc]/30"/> mohammad@baseerah.ai</div>
-              <div className="flex items-center gap-4" dir="ltr"><Phone size={18} className="text-[#cfd9cc]/30"/> +966 500 000 000</div>
+              <div className="flex items-center gap-4"><MapPin size={18} className="text-[#cfd9cc]/30" /> مكة المكرمة، المملكة العربية السعودية</div>
+              <div className="flex items-center gap-4"><Mail size={18} className="text-[#cfd9cc]/30" /> info@basserahai.com</div>
+              <div className="flex items-center gap-4" dir="ltr"><Phone size={18} className="text-[#cfd9cc]/30" /> 0546281876</div>
             </div>
           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-           <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">© ٢٠٢٤ بصيرة للذكاء الاصطناعي. جميع الحقوق محفوظة.</p>
-           <div className="flex gap-8">
-              <a href="#" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">سياسة الخصوصية</a>
-              <a href="#" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">شروط الخدمة</a>
-           </div>
+          <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">© ٢٠٢٤ بصيرة للذكاء الاصطناعي. جميع الحقوق محفوظة.</p>
+          <div className="flex gap-8">
+            <a href="#" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">سياسة الخصوصية</a>
+            <a href="#" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">شروط الخدمة</a>
+          </div>
         </div>
       </footer>
     </div>

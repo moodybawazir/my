@@ -9,6 +9,7 @@ const Contact: React.FC = () => {
   const [formData, setFormData] = React.useState({
     name: '',
     email: '',
+    phone: '',
     company: '',
     industry: 'عقارات',
     budget: '١٠,٠٠٠ - ٢٥,٠٠٠ ريال',
@@ -22,10 +23,17 @@ const Contact: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await supabase.from('messages').insert({
-      name: formData.name,
+    const { error } = await (supabase.from('messages') as any).insert({
+      sender_name: formData.name,
       email: formData.email,
-      message: `[${formData.industry}] ${formData.company} (${formData.budget}): ${formData.message}`
+      message: formData.message,
+      payload: {
+        phone: formData.phone,
+        company: formData.company,
+        industry: formData.industry,
+        budget: formData.budget,
+        submitted_at: new Date().toISOString()
+      }
     });
 
     if (error) {
@@ -69,7 +77,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mb-2">البريد الإلكتروني</h4>
-                    <p className="text-white font-bold text-lg">strategic@baseerah.ai</p>
+                    <p className="text-white font-bold text-lg">info@basserahai.com</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-6 group">
@@ -78,7 +86,7 @@ const Contact: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mb-2">الخط المباشر</h4>
-                    <p className="text-white font-bold text-lg" dir="ltr">+966 50 000 0000</p>
+                    <p className="text-white font-bold text-lg" dir="ltr">0546281876</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-6 group">

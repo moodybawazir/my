@@ -104,8 +104,8 @@ export const Layout: React.FC = () => {
             <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">التواصل الاستراتيجي</h4>
             <div className="space-y-6 text-[#cfd9cc]/60 text-sm font-medium">
               <div className="flex items-center gap-4"><MapPin size={18} className="text-[#cfd9cc]/30" /> مكة المكرمة، المملكة العربية السعودية</div>
-              <div className="flex items-center gap-4"><Mail size={18} className="text-[#cfd9cc]/30" /> mohammad@baseerah.ai</div>
-              <div className="flex items-center gap-4" dir="ltr"><Phone size={18} className="text-[#cfd9cc]/30" /> +966 500 000 000</div>
+              <div className="flex items-center gap-4"><Mail size={18} className="text-[#cfd9cc]/30" /> info@basserahai.com</div>
+              <div className="flex items-center gap-4" dir="ltr"><Phone size={18} className="text-[#cfd9cc]/30" /> 0546281876</div>
             </div>
           </div>
         </div>

@@ -148,8 +148,8 @@ const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24 gap-6">
             <div className="text-right">
-              <h2 className="text-[10px] font-black text-[#cfd9cc] uppercase tracking-[0.6em] mb-4 opacity-40">محفظة الأتمتة</h2>
-              <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight">أتمتة بلا حدود.</h3>
+              <h2 className="text-[10px] font-black text-[#cfd9cc] uppercase tracking-[0.6em] mb-4 opacity-40 text-center md:text-right">محفظة الأتمتة</h2>
+              <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight text-center md:text-right">أتمتة بلا حدود.</h3>
             </div>
             <Link to="/services" className="text-[#cfd9cc] font-black border-b border-[#cfd9cc]/30 pb-1 hover:border-[#cfd9cc] transition-luxury text-sm">شاهد كافة القطاعات</Link>
           </div>

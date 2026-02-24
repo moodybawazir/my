@@ -6,7 +6,7 @@ import {
   Activity, Package, FileText, Layout as LayoutIcon,
   Save, X, Download, Filter, TrendingUp, AlertCircle,
   ShoppingCart, Layers, Globe, Image as ImageIcon, Power, ChevronRight, LayoutDashboard,
-  Cpu, Building2, Gift, ShoppingBag, LogOut
+  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -30,7 +30,7 @@ const AdminPortal: React.FC = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'content' | 'customers' | 'invoices' | 'settings' | 'orders'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'content' | 'customers' | 'invoices' | 'settings' | 'orders' | 'messages'>('dashboard');
   const [contentTab, setContentTab] = useState<'home' | 'about' | 'services' | 'products' | 'industries'>('home');
   const [selectedIndustry, setSelectedIndustry] = useState<'real-estate' | 'restaurants' | 'medical' | 'ai-assistant' | 'ecommerce' | 'accounting'>('real-estate');
   const [industrySections, setIndustrySections] = useState<any[]>([]);
@@ -47,6 +47,7 @@ const AdminPortal: React.FC = () => {
   const [aboutData, setAboutData] = useState<any>({});
   const [settings, setSettings] = useState<any>({});
   const [orders, setOrders] = useState<any[]>([]);
+  const [messages, setMessages] = useState<any[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'customer' | 'product' | 'service'>('customer');
@@ -110,6 +111,10 @@ const AdminPortal: React.FC = () => {
       // Fetch Real Orders
       const { data: ordersData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
       if (ordersData) setOrders(ordersData);
+
+      // Fetch Messages
+      const { data: messagesData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
+      if (messagesData) setMessages(messagesData || []);
     };
 
     fetchData();
@@ -419,6 +424,7 @@ const AdminPortal: React.FC = () => {
             { id: 'customers', label: 'إدارة العملاء', icon: Users },
             { id: 'invoices', label: 'الفواتير', icon: FileText },
             { id: 'content', label: 'إدارة المحتوى', icon: Layers },
+            { id: 'messages', label: 'رسائل التواصل', icon: MessageSquare },
             { id: 'settings', label: 'الإعدادات', icon: Settings },
           ].map(item => (
             <button
@@ -1182,6 +1188,73 @@ const AdminPortal: React.FC = () => {
                           >
                             عرض في LS
                           </a>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeMenu === 'messages' && (
+          <div className="space-y-12 animate-in fade-in duration-700">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">رسائل التواصل</h2>
+                <p className="text-[#cfd9cc]/40 mt-4 font-medium text-lg">طلبات الاستشارة والاستفسارات الواردة من الموقع.</p>
+              </div>
+            </header>
+
+            <div className="glass rounded-[55px] border-white/5 overflow-x-auto shadow-2xl">
+              <table className="w-full text-right border-collapse min-w-[1000px]">
+                <thead>
+                  <tr className="bg-white/5 text-[10px] font-black text-[#cfd9cc]/30 uppercase tracking-[0.3em] border-b border-white/5">
+                    <th className="p-10">المرسل</th>
+                    <th className="p-10">الرسالة</th>
+                    <th className="p-10">البيانات الإضافية</th>
+                    <th className="p-10">التاريخ</th>
+                    <th className="p-10 text-left">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {messages.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-white/20 font-bold">لا توجد رسائل حتى الآن</td>
+                    </tr>
+                  ) : (
+                    messages.map((msg: any) => (
+                      <tr key={msg.id} className="group hover:bg-white/[0.02] transition-luxury text-right">
+                        <td className="p-10">
+                          <div className="font-black text-white text-xl">{msg.sender_name}</div>
+                          <div className="text-sm text-[#cfd9cc]/30 mt-1">{msg.email}</div>
+                        </td>
+                        <td className="p-10">
+                          <p className="text-[#cfd9cc] text-sm leading-relaxed max-w-md line-clamp-3">{msg.message}</p>
+                        </td>
+                        <td className="p-10">
+                          <div className="space-y-1 text-xs">
+                            {msg.payload?.phone && <div className="text-emerald-400 font-bold" dir="ltr">{msg.payload.phone}</div>}
+                            {msg.payload?.company && <div className="text-[#cfd9cc]/40">{msg.payload.company}</div>}
+                            {msg.payload?.industry && <div className="text-[#cfd9cc]/40">{msg.payload.industry} | {msg.payload.budget}</div>}
+                          </div>
+                        </td>
+                        <td className="p-10 text-sm text-[#cfd9cc]/40">{new Date(msg.created_at).toLocaleDateString('ar-SA')}</td>
+                        <td className="p-10 text-left">
+                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-luxury">
+                            <button
+                              onClick={async () => {
+                                if (confirm('هل تريد حذف هذه الرسالة؟')) {
+                                  const { error } = await supabase.from('messages').delete().eq('id', msg.id);
+                                  if (!error) setMessages(prev => prev.filter(m => m.id !== msg.id));
+                                }
+                              }}
+                              className="p-4 bg-red-500/10 rounded-2xl text-red-400 hover:bg-red-500 hover:text-white transition-luxury"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))
