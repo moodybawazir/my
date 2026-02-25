@@ -60,13 +60,21 @@ export async function fetchIndustryContent(industryId: string) {
         .eq('industry_id', industryId)
         .maybeSingle();
 
-    const [sections, services, loyalty] = await Promise.all([
+    const mainServicePromise = supabase
+        .from('services')
+        .select('*')
+        .eq('id', industryId)
+        .maybeSingle();
+
+    const [sections, services, loyalty, mainService] = await Promise.all([
         sectionsPromise,
         servicesPromise,
-        loyaltyPromise
+        loyaltyPromise,
+        mainServicePromise
     ]);
 
     return {
+        serviceModel: mainService.data || null,
         sections: sections.data as IndustrySection[] || [],
         services: services.data as IndustrySubService[] || [],
         loyalty: loyalty.data as LoyaltyProgram || null

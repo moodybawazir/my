@@ -6,6 +6,7 @@ import {
     Building2, BrainCircuit, Coffee, Stethoscope, ShoppingCart, Calculator, Printer
 } from 'lucide-react';
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
+import { ServiceSubscriptions } from '../src/components/subscriptions/ServiceSubscriptions';
 
 const IconMap: any = {
     Building2, BrainCircuit, Coffee, Stethoscope, ShoppingCart, Calculator, Printer, 'real-estate': Building2, 'medical': Stethoscope, 'restaurants': Coffee, 'ai-assistant': BrainCircuit, 'ecommerce': ShoppingCart, 'accounting': Calculator, 'printing-crestalnet': Printer
@@ -48,7 +49,7 @@ const ServiceDetail: React.FC = () => {
         return <div className="min-h-screen bg-[#0d2226] flex items-center justify-center text-[#cfd9cc]">جاري التحميل...</div>;
     }
 
-    if (!content || content.services.length === 0) {
+    if (!content || (!content.serviceModel && content.services.length === 0)) {
         return (
             <div className="min-h-screen pt-48 pb-24 px-6 bg-[#0d2226] flex items-center justify-center">
                 <div className="text-center">
@@ -132,6 +133,9 @@ const ServiceDetail: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Subscription Plans Section */}
+                {content.serviceModel?.has_subscription && serviceId && <ServiceSubscriptions serviceId={serviceId} />}
 
                 {/* Sub-services Grid */}
                 <div className="flex items-center justify-between mb-12">

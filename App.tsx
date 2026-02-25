@@ -17,6 +17,10 @@ import Checkout from './pages/Checkout';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import { Layout, AdminLayout } from './components/Layout';
+import ServiceSubscriptionsAdmin from './pages/ServiceSubscriptionsAdmin';
+import Store from './pages/Store';
+import StoreProductDetail from './pages/StoreProductDetail';
+import StoreAdmin from './pages/StoreAdmin';
 
 const App: React.FC = () => {
   return (
@@ -32,6 +36,9 @@ const App: React.FC = () => {
               <Route path="/products" element={<Products />} />
               <Route path="/product/:productId" element={<ProductDetail />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/store" element={<Store />} />
+              <Route path="/store/category/:categorySlug" element={<Store />} />
+              <Route path="/store/products/:productSlug" element={<StoreProductDetail />} />
 
               {/* Unified Dynamic Project System */}
               <Route path="/project/:industryId" element={<ProjectIndustrySelector />} />
@@ -42,6 +49,8 @@ const App: React.FC = () => {
             </Route>
             <Route element={<AdminLayout />}>
               <Route path="/admin" element={<AdminPortal />} />
+              <Route path="/admin/services/:id/subscriptions" element={<ServiceSubscriptionsAdmin />} />
+              <Route path="/admin/store" element={<StoreAdmin />} />
             </Route>
           </Routes>
         </Router>

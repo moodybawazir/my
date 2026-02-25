@@ -6,7 +6,7 @@ import {
   Activity, Package, FileText, Layout as LayoutIcon,
   Save, X, Download, Filter, TrendingUp, AlertCircle,
   ShoppingCart, Layers, Globe, Image as ImageIcon, Power, ChevronRight, LayoutDashboard,
-  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare
+  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare, Tag
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -280,12 +280,39 @@ const AdminPortal: React.FC = () => {
     }
   };
 
-  const chartData = [
-    { name: 'يناير', sales: 4200, users: 45 },
-    { name: 'فبراير', sales: 5800, users: 52 },
-    { name: 'مارس', sales: 8900, users: 78 },
-    { name: 'أبريل', sales: 7400, users: 65 },
-  ];
+  const chartData = useMemo(() => {
+    const months = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+    const data = [];
+    const now = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = months[d.getMonth()];
+
+      const monthOrders = orders.filter(o => {
+        const orderDate = new Date(o.created_at);
+        return orderDate.getMonth() === d.getMonth() && orderDate.getFullYear() === d.getFullYear();
+      });
+      const sales = monthOrders.reduce((acc, curr) => acc + parseFloat(curr.total_amount || 0), 0);
+
+      const monthUsers = customers.filter(c => {
+        const userDate = new Date(c.created_at);
+        return userDate.getMonth() === d.getMonth() && userDate.getFullYear() === d.getFullYear();
+      });
+      const users = monthUsers.length;
+
+      data.push({ name: monthName, sales, users });
+    }
+    return data;
+  }, [orders, customers]);
+
+  const growth = useMemo(() => {
+    if (customers.length === 0) return '+٠٪';
+    const currentMonth = new Date().getMonth();
+    const newThisMonth = customers.filter(c => new Date(c.created_at).getMonth() === currentMonth).length;
+    const percentage = customers.length > 0 ? Math.round((newThisMonth / customers.length) * 100) : 0;
+    return `+${percentage}٪`;
+  }, [customers]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -382,7 +409,9 @@ const AdminPortal: React.FC = () => {
         price: data.price,
         desc: data.desc,
         category: data.category,
-        ls_variant_id: data.ls_variant_id
+        ls_variant_id: data.ls_variant_id,
+        has_subscription: data.has_subscription === 'on',
+        subscription_type: data.subscription_type || 'none'
       });
 
       if (!error) {
@@ -393,7 +422,7 @@ const AdminPortal: React.FC = () => {
     }
   };
 
-  const totalSales = customers.reduce((acc, c) => acc + (c.balance || 0), 0);
+  const totalSales = orders.reduce((acc, o) => acc + parseFloat(o.total_amount || 0), 0);
   const pendingInvoices = invoices.filter(i => i.status !== 'paid').length;
 
   if (authLoading || isAuthorized === null) {
@@ -424,12 +453,13 @@ const AdminPortal: React.FC = () => {
             { id: 'customers', label: 'إدارة العملاء', icon: Users },
             { id: 'invoices', label: 'الفواتير', icon: FileText },
             { id: 'content', label: 'إدارة المحتوى', icon: Layers },
+            { id: 'store', label: 'إدارة المتجر', icon: Tag, path: '/admin/store' },
             { id: 'messages', label: 'رسائل التواصل', icon: MessageSquare },
             { id: 'settings', label: 'الإعدادات', icon: Settings },
           ].map(item => (
             <button
               key={item.id}
-              onClick={() => setActiveMenu(item.id as any)}
+              onClick={() => item.path ? navigate(item.path) : setActiveMenu(item.id as any)}
               className={`w-full flex items-center gap-5 px-5 py-4 rounded-2xl transition-luxury ${activeMenu === item.id
                 ? 'bg-[#cfd9cc] text-[#0d2226] shadow-glow font-black'
                 : 'text-white/40 hover:bg-white/5 hover:text-white'
@@ -467,7 +497,7 @@ const AdminPortal: React.FC = () => {
                 { label: 'المبيعات', val: `${(totalSales / 1000).toFixed(1)} ألف`, icon: DollarSign, color: 'text-emerald-400' },
                 { label: 'العملاء', val: customers.length, icon: Users, color: 'text-blue-400' },
                 { label: 'فواتير', val: pendingInvoices, icon: AlertCircle, color: 'text-amber-400' },
-                { label: 'النمو', val: '+١٥٪', icon: TrendingUp, color: 'text-[#cfd9cc]' },
+                { label: 'النمو', val: growth, icon: TrendingUp, color: 'text-[#cfd9cc]' },
               ].map((stat, i) => (
                 <div key={i} className="glass p-10 rounded-[45px] border-white/5 hover:border-[#cfd9cc]/20 transition-all group">
                   <div className="flex items-center justify-between mb-8">
@@ -600,7 +630,6 @@ const AdminPortal: React.FC = () => {
                   { id: 'home', label: 'الرئيسية', icon: LayoutDashboard },
                   { id: 'about', label: 'من نحن', icon: Globe },
                   { id: 'services', label: 'الخدمات العامة', icon: Layers },
-                  { id: 'products', label: 'المتجر', icon: ShoppingCart },
                   { id: 'industries', label: 'إدارة القطاعات (متقدم)', icon: Building2 },
                 ].map(tab => (
                   <button
@@ -782,6 +811,9 @@ const AdminPortal: React.FC = () => {
                             <Layers size={28} />
                           </div>
                           <div className="flex gap-2">
+                            {s.has_subscription && (
+                              <button onClick={() => navigate(`/admin/services/${s.id}/subscriptions`)} className="p-3 bg-[#cfd9cc]/20 rounded-xl text-[#cfd9cc] hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-luxury" title="إدارة الاشتراكات"><Settings size={18} /></button>
+                            )}
                             <button onClick={() => openModal('service', s)} className="p-3 glass-dark rounded-xl text-[#cfd9cc] hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-luxury"><Edit3 size={18} /></button>
                             <button onClick={() => handleDeleteGeneralService(s.id)} className="p-3 bg-red-500/20 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-luxury"><Trash2 size={18} /></button>
                           </div>
@@ -791,41 +823,6 @@ const AdminPortal: React.FC = () => {
                         <p className="text-[#cfd9cc]/40 text-sm leading-relaxed mb-6">{s.desc}</p>
                       </div>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {contentTab === 'products' && (
-                <div className="space-y-16 animate-in slide-in-from-right duration-700">
-                  <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                    <h3 className="text-3xl font-black text-white">منتجات المتجر الرقمي</h3>
-                    <button onClick={() => openModal('product')} className="w-full md:w-auto bg-[#cfd9cc] text-[#0d2226] px-10 py-5 rounded-2xl font-black flex items-center justify-center gap-3 shadow-glow hover:bg-white transition-luxury">
-                      <PlusCircle size={24} /> إضافة منتج جديد
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {products.map(p => {
-                      const displayTitle = p.name || p.title;
-                      const displayImage = p.images?.[0] || p.image || '/placeholder.png';
-
-                      return (
-                        <div key={p.id} className="glass rounded-[50px] overflow-hidden border-white/5 group relative transition-luxury hover:scale-[1.02]">
-                          <div className="h-64 relative">
-                            <img src={displayImage} className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-luxury duration-[2s]" alt="" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent opacity-60" />
-                            <div className="absolute top-6 left-6 flex gap-2">
-                              <button onClick={() => openModal('product', p)} className="p-3 glass-dark rounded-xl text-[#cfd9cc] hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-luxury"><Edit3 size={18} /></button>
-                              <button className="p-3 bg-red-500/20 rounded-xl text-red-400 hover:bg-red-500 hover:text-white transition-luxury"><Trash2 size={18} /></button>
-                            </div>
-                          </div>
-                          <div className="p-10">
-                            <div className="px-4 py-1.5 bg-[#1e403a] text-[#cfd9cc] rounded-lg text-[10px] font-black uppercase inline-block mb-6">{p.category}</div>
-                            <h4 className="text-2xl font-black text-white mb-3">{displayTitle}</h4>
-                            <div className="text-2xl font-black text-[#cfd9cc]">{p.price?.toLocaleString('ar-SA')} ر.س</div>
-                          </div>
-                        </div>
-                      );
-                    })}
                   </div>
                 </div>
               )}
@@ -1336,6 +1333,26 @@ const AdminPortal: React.FC = () => {
                         <input name="ls_variant_id" defaultValue={editingItem?.ls_variant_id} placeholder="e.g. 12345" className="w-full bg-white/5 border border-[#cfd9cc]/20 rounded-2xl px-8 py-5 text-white text-xl font-bold outline-none focus:border-[#cfd9cc] transition-luxury" />
                       </div>
                     </div>
+
+                    {modalType === 'service' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black text-white/20 uppercase tracking-widest mr-6">تفعيل الاشتراكات؟</label>
+                          <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl px-8 py-5 h-[68px]">
+                            <input type="checkbox" name="has_subscription" defaultChecked={editingItem?.has_subscription} className="w-6 h-6 accent-[#cfd9cc] rounded" />
+                            <span className="text-white text-lg font-bold">مفعل</span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black text-white/20 uppercase tracking-widest mr-6">نظام الاشتراك</label>
+                          <select name="subscription_type" defaultValue={editingItem?.subscription_type || 'none'} className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white text-lg font-bold outline-none focus:border-[#cfd9cc]/40 transition-luxury h-[68px]">
+                            <option value="none">بدون (قياسي)</option>
+                            <option value="tiered">باقات متدرجة (Tiered)</option>
+                            <option value="monthly">اشتراك شهري (Monthly)</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-3">
                       <label className="text-[10px] font-black text-white/20 uppercase tracking-widest mr-6">الخصائص (مفصولة بفاصلة)</label>
