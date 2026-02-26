@@ -125,9 +125,16 @@ const Home: React.FC = () => {
           <Sparkles size={14} className="text-[#cfd9cc]" /> أتمتة المستقبل تبدأ هنا
         </div>
 
-        <h1 className="font-black text-white mb-12 tracking-tighter drop-shadow-2xl animate-in fade-in duration-1000">
-          {renderHeroTitle()}
-        </h1>
+        <div className="relative inline-block">
+          <h1 className="font-black text-white mb-12 tracking-tighter drop-shadow-2xl animate-in fade-in duration-1000">
+            {renderHeroTitle()}
+          </h1>
+          {cmsData.heroImage && (
+            <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl aspect-video opacity-20 blur-3xl rounded-full overflow-hidden">
+              <img src={cmsData.heroImage} className="w-full h-full object-cover" alt="" />
+            </div>
+          )}
+        </div>
 
         <p className="text-lg md:text-2xl text-[#cfd9cc]/60 mb-16 max-w-3xl mx-auto font-light leading-relaxed animate-in fade-in duration-1000 delay-300 px-4">
           {cmsData.heroSubtitle}

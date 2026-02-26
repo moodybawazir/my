@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../src/lib/supabase';
 import { Helmet } from 'react-helmet-async';
 import { StoreCategory, StoreProduct } from '../src/types/store.types';
-import { Plus, Edit2, Trash2, Tag, ShoppingBag, ArrowRight, Save, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Tag, ShoppingBag, ArrowRight, Save, X, Image as ImageIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useStorage } from '../src/hooks/useStorage';
 
 export default function StoreAdmin() {
     const navigate = useNavigate();
@@ -21,6 +22,7 @@ export default function StoreAdmin() {
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const { uploadImage, uploading: isUploading } = useStorage();
 
     useEffect(() => {
         loadData();
@@ -46,12 +48,22 @@ export default function StoreAdmin() {
         const fd = new FormData(e.currentTarget);
         const data = Object.fromEntries(fd.entries());
 
+        // Handle image upload if a file was selected
+        const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+        let imageUrl = editingCategory?.image || null;
+
+        if (fileInput?.files?.length) {
+            const uploadedUrl = await uploadImage(fileInput.files[0], 'products', 'store_categories');
+            if (uploadedUrl) imageUrl = uploadedUrl;
+        }
+
         const payload = {
             name: data.name as string,
             slug: data.slug as string,
             description: (data.description as string) || null,
             icon: (data.icon as string) || null,
             sort_order: parseInt(data.sort_order as string) || 0,
+            image: imageUrl,
             is_active: data.is_active === 'on'
         };
 
@@ -81,7 +93,17 @@ export default function StoreAdmin() {
         const data = Object.fromEntries(fd.entries());
 
         const featuresArray = (data.features as string)?.split(',').map(s => s.trim()).filter(Boolean) || [];
-        const imagesArray = [(data.image_url as string)].filter(Boolean); // Simple single image to array mapping
+
+        // Handle image upload if a file was selected
+        const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+        let imageUrl = data.existing_image_url as string || null;
+
+        if (fileInput?.files?.length) {
+            const uploadedUrl = await uploadImage(fileInput.files[0], 'products', 'store_products');
+            if (uploadedUrl) imageUrl = uploadedUrl;
+        }
+
+        const imagesArray = imageUrl ? [imageUrl] : [];
 
         const payload = {
             name: data.name as string,
@@ -287,6 +309,46 @@ export default function StoreAdmin() {
                                     <label htmlFor="cat_active" className="text-sm font-bold text-white cursor-pointer">قسم نشط</label>
                                 </div>
                             </div>
+                            <div>
+                                <label className="block text-sm font-bold text-white/60 mb-2">صورة القسم (الخلفية)</label>
+                                <div className="relative group/img h-[100px] bg-white/5 border border-white/10 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer hover:border-[#cfd9cc]/40 transition-all">
+                                    <input
+                                        type="file"
+                                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onload = (ev) => {
+                                                    const img = e.target.parentElement?.querySelector('img');
+                                                    if (img) img.src = ev.target?.result as string;
+                                                    const placeholder = e.target.parentElement?.querySelector('.placeholder-icon');
+                                                    if (placeholder) placeholder.classList.add('hidden');
+                                                    if (img) img.classList.remove('hidden');
+                                                };
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }}
+                                    />
+                                    {editingCategory?.image ? (
+                                        <img src={editingCategory.image} className="w-full h-full object-cover" alt="" />
+                                    ) : (
+                                        <>
+                                            <div className="placeholder-icon flex flex-col items-center gap-2">
+                                                <ImageIcon size={24} className="text-white/20" />
+                                                <span className="text-[10px] text-white/20 font-bold uppercase">رفع صورة</span>
+                                            </div>
+                                            <img src="" className="w-full h-full object-cover hidden" alt="" />
+                                        </>
+                                    )}
+                                    {isUploading && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                            <div className="w-6 h-6 border-2 border-[#cfd9cc] border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <button disabled={submitting} type="submit" className="w-full bg-[#cfd9cc] text-[#0d2226] font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-colors disabled:opacity-50 mt-4">
                                 <Save size={20} /> حفظ القسم
                             </button>
@@ -321,8 +383,45 @@ export default function StoreAdmin() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-white/60 mb-2">الرابط للصورة (مؤقت)</label>
-                                    <input name="image_url" defaultValue={editingProduct?.images?.[0] || ''} placeholder="https://..." className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#cfd9cc]/40 text-left font-mono" dir="ltr" />
+                                    <label className="block text-sm font-bold text-white/60 mb-2">صورة المنتج</label>
+                                    <div className="relative group/img h-[120px] bg-white/5 border border-white/10 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer hover:border-[#cfd9cc]/40 transition-all">
+                                        <input type="hidden" name="existing_image_url" defaultValue={editingProduct?.images?.[0] || ''} />
+                                        <input
+                                            type="file"
+                                            className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (ev) => {
+                                                        const img = e.target.parentElement?.querySelector('img');
+                                                        if (img) img.src = ev.target?.result as string;
+                                                        const placeholder = e.target.parentElement?.querySelector('.placeholder-icon');
+                                                        if (placeholder) placeholder.classList.add('hidden');
+                                                        if (img) img.classList.remove('hidden');
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                        />
+                                        {editingProduct?.images?.[0] ? (
+                                            <img src={editingProduct.images[0]} className="w-full h-full object-cover" alt="" />
+                                        ) : (
+                                            <>
+                                                <div className="placeholder-icon flex flex-col items-center gap-2">
+                                                    <ImageIcon size={32} className="text-white/20" />
+                                                    <span className="text-[10px] text-white/20 font-bold uppercase">رفع صورة</span>
+                                                </div>
+                                                <img src="" className="w-full h-full object-cover hidden" alt="" />
+                                            </>
+                                        )}
+                                        {isUploading && (
+                                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                                <div className="w-6 h-6 border-2 border-[#cfd9cc] border-t-transparent rounded-full animate-spin" />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-white/60 mb-2">السعر (ر.س)</label>

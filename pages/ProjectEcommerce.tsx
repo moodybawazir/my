@@ -52,8 +52,12 @@ const ProjectEcommerce: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
           {content.services.map((sub, i) => (
             <div key={i} className="glass p-10 rounded-[40px] border-white/5 group hover:border-[#cfd9cc]/20 transition-all flex flex-col items-center">
-              <div className="w-16 h-16 bg-[#1e403a] rounded-[22px] flex items-center justify-center mb-8 border border-white/5">
-                <span className="text-[#cfd9cc] text-2xl font-black">{i + 1}</span>
+              <div className="w-16 h-16 bg-[#1e403a] rounded-[22px] flex items-center justify-center mb-8 border border-white/5 overflow-hidden">
+                {sub.image_url ? (
+                  <img src={sub.image_url} className="w-full h-full object-cover" alt="" />
+                ) : (
+                  <span className="text-[#cfd9cc] text-2xl font-black">{i + 1}</span>
+                )}
               </div>
               <h3 className="text-2xl font-bold mb-4">{sub.title}</h3>
               <p className="text-white/60 mb-6 font-light">{sub.description}</p>

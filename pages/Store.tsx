@@ -77,8 +77,16 @@ export default function Store() {
 
             {/* Store Hero */}
             <section className="relative pt-32 pb-20 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#1a383d]/40 to-transparent pointer-events-none" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#cfd9cc]/5 rounded-full blur-[100px] pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1a383d]/40 to-transparent pointer-events-none z-10" />
+
+                {/* Dynamic Category Background */}
+                {activeCategory?.image ? (
+                    <div className="absolute inset-0 w-full h-full opacity-10 blur-2xl">
+                        <img src={activeCategory.image} className="w-full h-full object-cover" alt="" />
+                    </div>
+                ) : (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#cfd9cc]/5 rounded-full blur-[100px] pointer-events-none" />
+                )}
 
                 <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center">
                     <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full glass border-white/10 text-[#cfd9cc] text-sm font-black mb-8 animate-in slide-in-from-bottom-4 duration-700">

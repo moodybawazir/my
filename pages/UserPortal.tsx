@@ -9,7 +9,7 @@ import { useAuth } from '../src/context/AuthContext';
 import { supabase } from '../src/lib/supabase';
 
 const UserPortal: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
@@ -17,8 +17,6 @@ const UserPortal: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
-
     const fetchUserData = async () => {
       setLoading(true);
 

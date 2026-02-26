@@ -15,6 +15,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/context/AuthContext';
+import { useStorage } from '../src/hooks/useStorage';
 
 const STORAGE_KEYS = {
   HOME: 'baseerah_home_content',
@@ -53,11 +54,14 @@ const AdminPortal: React.FC = () => {
   const [modalType, setModalType] = useState<'customer' | 'product' | 'service'>('customer');
   const [editingItem, setEditingItem] = useState<any>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const { uploadImage } = useStorage();
 
   useEffect(() => {
     const checkAuth = async () => {
       if (!user) {
-        if (!authLoading) navigate('/login');
+        if (!authLoading) {
+          window.location.href = window.location.origin + '/#/login';
+        }
         return;
       }
       const { data, error } = await supabase.from('users').select('role').eq('id', user.id).single();
@@ -208,30 +212,39 @@ const AdminPortal: React.FC = () => {
     }
   };
 
-  const handleGeneralImageUpload = async (id: string, table: 'industry_sections' | 'industry_sub_services', e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGeneralImageUpload = async (id: string | null, table: 'industry_sections' | 'industry_sub_services' | 'services' | 'home' | 'about', e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     const file = files[0];
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `${table}/${fileName}`;
+    const fileName = `${table}/${id ? id : 'general'}-${Math.random()}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('products')
-      .upload(filePath, file);
+    // Using 'products' bucket as it's the one currently configured in Supabase based on previous tool calls
+    const uploadedUrl = await uploadImage(file, 'products', table);
 
-    if (!uploadError) {
-      const { data } = supabase.storage.from('products').getPublicUrl(filePath);
-      if (table === 'industry_sections') {
-        await handleUpdateIndustrySection(id, { image_url: data.publicUrl });
-      } else {
-        await handleUpdateIndustryService(id, { image_url: data.publicUrl });
+    if (uploadedUrl) {
+      if (table === 'industry_sections' && id) {
+        await handleUpdateIndustrySection(id, { image_url: uploadedUrl });
+      } else if (table === 'industry_sub_services' && id) {
+        await handleUpdateIndustryService(id, { image_url: uploadedUrl });
+      } else if (table === 'services' && id) {
+        const { error } = await supabase.from('services').update({ image_url: uploadedUrl } as any).eq('id', id);
+        if (!error) {
+          setServices(prev => prev.map(s => s.id === id ? { ...s, image_url: uploadedUrl } : s));
+        }
+      } else if (table === 'home') {
+        const updated = { ...homeData, heroImage: uploadedUrl };
+        setHomeData(updated);
+        await handleSaveData(STORAGE_KEYS.HOME, updated);
+      } else if (table === 'about') {
+        const updated = { ...aboutData, mainImage: uploadedUrl };
+        setAboutData(updated);
+        await handleSaveData(STORAGE_KEYS.ABOUT, updated);
       }
     } else {
-      console.error('Upload error:', uploadError);
-      alert('خطأ في تحميل الصورة! تأكد من وجود Storage Bucket باسم products');
+      alert('خطأ في تحميل الصورة!');
     }
     setIsUploading(false);
   };
@@ -403,6 +416,17 @@ const AdminPortal: React.FC = () => {
         setTimeout(() => setIsSaved(false), 2000);
       }
     } else if (modalType === 'service') {
+      // Handle Image Upload if any
+      const fileInput = (e.currentTarget as HTMLFormElement).querySelector('input[type="file"]') as HTMLInputElement;
+      let imgUrl = editingItem?.image_url;
+
+      if (fileInput?.files?.length) {
+        const uploadedUrls = await handleFileUpload({ target: { files: fileInput.files } } as any);
+        if (uploadedUrls && uploadedUrls.length > 0) {
+          imgUrl = uploadedUrls[0];
+        }
+      }
+
       const { error } = await (supabase.from('services') as any).upsert({
         id: editingItem?.id || undefined,
         title: data.title,
@@ -411,7 +435,8 @@ const AdminPortal: React.FC = () => {
         category: data.category,
         ls_variant_id: data.ls_variant_id,
         has_subscription: data.has_subscription === 'on',
-        subscription_type: data.subscription_type || 'none'
+        subscription_type: data.subscription_type || 'none',
+        image_url: imgUrl
       });
 
       if (!error) {
@@ -648,13 +673,34 @@ const AdminPortal: React.FC = () => {
               {contentTab === 'home' && (
                 <div className="space-y-12 animate-in slide-in-from-right duration-700">
                   <div className="space-y-10">
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">عنوان الواجهة (Hero Title)</label>
-                      <textarea
-                        className="w-full bg-white/5 border border-white/10 rounded-[45px] p-10 text-white text-3xl md:text-5xl font-black outline-none focus:border-[#cfd9cc]/40 h-64 resize-none leading-tight transition-luxury"
-                        value={homeData.heroTitle}
-                        onChange={e => setHomeData({ ...homeData, heroTitle: e.target.value })}
-                      />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">عنوان الواجهة (Hero Title)</label>
+                        <textarea
+                          className="w-full bg-white/5 border border-white/10 rounded-[45px] p-10 text-white text-3xl md:text-5xl font-black outline-none focus:border-[#cfd9cc]/40 h-64 resize-none leading-tight transition-luxury"
+                          value={homeData.heroTitle}
+                          onChange={e => setHomeData({ ...homeData, heroTitle: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">صورة الواجهة (Hero Image)</label>
+                        <div className="relative h-64 glass rounded-[45px] border-white/5 overflow-hidden group/img">
+                          {homeData.heroImage ? (
+                            <img src={homeData.heroImage} className="w-full h-full object-cover transition-all group-hover/img:scale-110" alt="" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-white/20 font-black">لا توجد صورة واجهة</div>
+                          )}
+                          <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 cursor-pointer transition-all">
+                            <Plus className="text-[#cfd9cc]" size={48} />
+                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleGeneralImageUpload(null, 'home', e)} />
+                          </label>
+                          {isUploading && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                              <div className="w-12 h-12 border-4 border-[#cfd9cc] border-t-transparent rounded-full animate-spin" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     <div className="space-y-4">
                       <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">وصف الأقسام الإحصائية (Stats)</label>
@@ -713,22 +759,43 @@ const AdminPortal: React.FC = () => {
 
               {contentTab === 'about' && (
                 <div className="space-y-12 animate-in slide-in-from-right duration-700">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">المهمة (Mission)</label>
-                      <textarea
-                        className="w-full bg-white/5 border border-white/10 rounded-[35px] p-8 text-white text-lg outline-none focus:border-[#cfd9cc]/40 h-32 resize-none transition-luxury"
-                        value={aboutData.mission}
-                        onChange={e => setAboutData({ ...aboutData, mission: e.target.value })}
-                      />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">المهمة (Mission)</label>
+                        <textarea
+                          className="w-full bg-white/5 border border-white/10 rounded-[35px] p-8 text-white text-lg outline-none focus:border-[#cfd9cc]/40 h-32 resize-none transition-luxury"
+                          value={aboutData.mission}
+                          onChange={e => setAboutData({ ...aboutData, mission: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">الرؤية (Vision)</label>
+                        <textarea
+                          className="w-full bg-white/5 border border-white/10 rounded-[35px] p-8 text-white text-lg outline-none focus:border-[#cfd9cc]/40 h-32 resize-none transition-luxury"
+                          value={aboutData.vision}
+                          onChange={e => setAboutData({ ...aboutData, vision: e.target.value })}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-4">
-                      <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">الرؤية (Vision)</label>
-                      <textarea
-                        className="w-full bg-white/5 border border-white/10 rounded-[35px] p-8 text-white text-lg outline-none focus:border-[#cfd9cc]/40 h-32 resize-none transition-luxury"
-                        value={aboutData.vision}
-                        onChange={e => setAboutData({ ...aboutData, vision: e.target.value })}
-                      />
+                      <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">الصورة التعريفية (Main Image)</label>
+                      <div className="relative h-full min-h-[300px] glass rounded-[50px] border-white/5 overflow-hidden group/img">
+                        {aboutData.mainImage ? (
+                          <img src={aboutData.mainImage} className="w-full h-full object-cover transition-all group-hover/img:scale-105" alt="" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-white/20 font-black">لا توجد صورة تعريفية</div>
+                        )}
+                        <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 cursor-pointer transition-all">
+                          <Plus className="text-[#cfd9cc]" size={48} />
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleGeneralImageUpload(null, 'about', e)} />
+                        </label>
+                        {isUploading && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <div className="w-12 h-12 border-4 border-[#cfd9cc] border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -1312,6 +1379,21 @@ const AdminPortal: React.FC = () => {
                         <label className="text-[10px] font-black text-white/20 uppercase tracking-widest mr-6">العنوان</label>
                         <input name="title" required defaultValue={editingItem?.name || editingItem?.title} className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white text-xl font-bold outline-none focus:border-[#cfd9cc]/40 transition-luxury" />
                       </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-black text-white/20 uppercase tracking-widest mr-6">صورة القسم/الخدمة (رفع)</label>
+                        <div className="relative h-[68px] glass rounded-2xl border-white/5 overflow-hidden flex items-center px-6">
+                          <input type="file" name="image_file" className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                          <div className="flex items-center gap-4 text-[#cfd9cc]">
+                            <ImageIcon size={20} />
+                            <span className="text-sm font-bold truncate">
+                              {editingItem?.image_url ? 'تغيير الصورة القائمة' : 'اختر صورة للرفع'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
                         <label className="text-[10px] font-black text-white/20 uppercase tracking-widest mr-6">السعر</label>
                         <input name="price" required defaultValue={editingItem?.price} className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white text-xl font-bold outline-none focus:border-[#cfd9cc]/40 transition-luxury" />

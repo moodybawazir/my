@@ -63,7 +63,7 @@ const About: React.FC = () => {
           <div className="relative animate-in fade-in slide-in-from-left duration-1000 delay-300">
             <div className="absolute inset-0 bg-gradient-to-tr from-[#cfd9cc]/20 to-transparent blur-[120px] rounded-full" />
             <img
-              src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1200"
+              src={data.mainImage || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=1200"}
               className="relative rounded-[60px] border border-white/10 shadow-2xl grayscale hover:grayscale-0 transition-all duration-1000 object-cover aspect-[4/5]"
               alt="AI Innovation"
             />

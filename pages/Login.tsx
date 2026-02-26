@@ -41,10 +41,23 @@ const Login: React.FC = () => {
           const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-              emailRedirectTo: window.location.origin + (email === 'mohmmedc@gmail.com' ? '/admin' : '/portal'),
+              shouldCreateUser: false,
+              // Supabase automatically appends #access_token=... to the redirect URL
+              // With HashRouter, if we add #/admin here, it results in https://.../#/admin#access_token=...
+              // This breaks HashRouter. Instead, we redirect to the base URL and let AuthContext 
+              // handle the session, then the user goes to the default route, or we handle it later.
+              emailRedirectTo: 'https://www.basserahai.com',
             }
           });
-          if (error) throw error;
+
+          if (error) {
+            // If user doesn't exist, Supabase returns "Signups not allowed for otp" when shouldCreateUser is false
+            if (error.message.includes('Signups not allowed') || error.status === 400) {
+              throw new Error('هذا البريد الإلكتروني غير مسجل، يرجى إنشاء حساب أولاً.');
+            }
+            throw error;
+          }
+
           alert('تم إرسال رابط الدخول إلى بريدك الإلكتروني!');
           return;
         }
@@ -75,7 +88,7 @@ const Login: React.FC = () => {
               phone: phone,
               role: 'user' // Any registration via this form is a customer
             },
-            emailRedirectTo: window.location.origin + '/portal'
+            emailRedirectTo: 'https://www.basserahai.com/#/portal'
           }
         });
         if (error) throw error;
