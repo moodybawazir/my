@@ -12,7 +12,6 @@ const Contact: React.FC = () => {
     phone: '',
     company: '',
     industry: 'عقارات',
-    budget: '١٠,٠٠٠ - ٢٥,٠٠٠ ريال',
     message: ''
   });
 
@@ -23,17 +22,22 @@ const Contact: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const fullMessage = `
+الرسالة/الطموحات:
+${formData.message}
+
+---
+معلومات التواصل الإضافية:
+رقم الجوال: ${formData.phone || 'غير محدد'}
+اسم المنشأة/الشركة: ${formData.company || 'غير محدد'}
+نوع القطاع: ${formData.industry}
+    `.trim();
+
     const { error } = await (supabase.from('messages') as any).insert({
       sender_name: formData.name,
       email: formData.email,
-      message: formData.message,
-      payload: {
-        phone: formData.phone,
-        company: formData.company,
-        industry: formData.industry,
-        budget: formData.budget,
-        submitted_at: new Date().toISOString()
-      }
+      message: fullMessage,
+      category: 'contact'
     });
 
     if (error) {
@@ -178,31 +182,18 @@ const Contact: React.FC = () => {
               <div className="animate-in fade-in slide-in-from-right duration-500">
                 <h3 className="text-4xl font-black text-white mb-10">تفاصيل المشروع</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
-                  <div className="space-y-4">
+                  <div className="col-span-full space-y-4">
                     <label className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mr-4">نوع القطاع</label>
                     <select
                       className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white focus:outline-none focus:border-[#cfd9cc]/40 appearance-none text-xl"
                       value={formData.industry}
                       onChange={e => setFormData({ ...formData, industry: e.target.value })}
                     >
-                      <option>تجارة إلكترونية</option>
-                      <option>عقارات</option>
-                      <option>رعاية صحية</option>
-                      <option>ذكاء اصطناعي مخصص</option>
-                      <option>محاسبة ومالية</option>
-                    </select>
-                  </div>
-                  <div className="space-y-4">
-                    <label className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mr-4">الميزانية التقديرية</label>
-                    <select
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-white focus:outline-none focus:border-[#cfd9cc]/40 appearance-none text-xl"
-                      value={formData.budget}
-                      onChange={e => setFormData({ ...formData, budget: e.target.value })}
-                    >
-                      <option>٥,٠٠٠ - ١٠,٠٠٠ ريال</option>
-                      <option>١٠,٠٠٠ - ٢٥,٠٠٠ ريال</option>
-                      <option>٢٥,٠٠٠ - ١٠٠,٠٠٠ ريال</option>
-                      <option>أكثر من ١٠٠,٠٠٠ ريال</option>
+                      <option className="bg-[#0d2226] text-[#cfd9cc]">تجارة إلكترونية</option>
+                      <option className="bg-[#0d2226] text-[#cfd9cc]">عقارات</option>
+                      <option className="bg-[#0d2226] text-[#cfd9cc]">رعاية صحية</option>
+                      <option className="bg-[#0d2226] text-[#cfd9cc]">ذكاء اصطناعي مخصص</option>
+                      <option className="bg-[#0d2226] text-[#cfd9cc]">محاسبة ومالية</option>
                     </select>
                   </div>
                   <div className="col-span-full space-y-4">
