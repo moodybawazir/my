@@ -13,7 +13,7 @@ export const Layout: React.FC = () => {
     { name: 'الرئيسية', path: '/' },
     { name: 'من نحن', path: '/about' },
     { name: 'الخدمات', path: '/services' },
-    { name: 'المتجر الرقمي', path: '/products' },
+    { name: 'المتجر الرقمي', path: '/store' },
     { name: 'بوابة العميل', path: '/portal' },
   ];
 
@@ -94,7 +94,7 @@ export const Layout: React.FC = () => {
             <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">روابط سريعة</h4>
             <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
               <li className="hover:text-white transition-luxury"><Link to="/admin">لوحة التحكم</Link></li>
-              <li className="hover:text-white transition-luxury"><Link to="/products">المتجر الرقمي</Link></li>
+              <li className="hover:text-white transition-luxury"><Link to="/store">المتجر الرقمي</Link></li>
               <li className="hover:text-white transition-luxury"><Link to="/contact">تواصل معنا</Link></li>
             </ul>
           </div>

@@ -75,7 +75,7 @@ const ProjectDetail: React.FC = () => {
       return (
          <div className="min-h-screen pt-40 text-center text-white bg-[#0d2226]" dir="rtl">
             <h1 className="text-4xl font-black mb-8">عذراً، هذا المنتج غير متاح حالياً</h1>
-            <Link to="/products" className="text-[#cfd9cc] underline font-bold">العودة للمتجر الرقمي</Link>
+            <Link to="/store" className="text-[#cfd9cc] underline font-bold">العودة للمتجر الرقمي</Link>
          </div>
       );
    }
@@ -96,7 +96,7 @@ const ProjectDetail: React.FC = () => {
          <div className="max-w-7xl mx-auto">
 
             {/* Navigation */}
-            <Link to="/products" className="inline-flex items-center gap-2 text-[#cfd9cc]/40 hover:text-[#cfd9cc] mb-12 transition-colors font-bold group">
+            <Link to="/store" className="inline-flex items-center gap-2 text-[#cfd9cc]/40 hover:text-[#cfd9cc] mb-12 transition-colors font-bold group">
                <ArrowLeft size={20} className="group-hover:-translate-x-2 transition-transform" /> العودة للمتجر الرقمي
             </Link>
 
