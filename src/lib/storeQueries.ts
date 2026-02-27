@@ -2,6 +2,7 @@ import { supabase } from './supabase';
 import { StoreCategory, StoreProduct, ProductCategoryWithParent, ProductWithCategory } from '../types/store.types';
 
 export async function fetchStoreCategories(): Promise<StoreCategory[]> {
+    console.log('Fetching store categories...');
     const { data, error } = await supabase
         .from('store_categories')
         .select('*')
@@ -12,10 +13,12 @@ export async function fetchStoreCategories(): Promise<StoreCategory[]> {
         console.error('Error fetching categories:', error);
         return [];
     }
+    console.log(`Successfully fetched ${data?.length || 0} categories`);
     return data || [];
 }
 
 export async function fetchCategoryBySlug(slug: string): Promise<StoreCategory | null> {
+    console.log(`Fetching category by slug: ${slug}`);
     const { data, error } = await supabase
         .from('store_categories')
         .select('*')
@@ -24,13 +27,14 @@ export async function fetchCategoryBySlug(slug: string): Promise<StoreCategory |
         .single();
 
     if (error) {
-        console.error('Error fetching category:', error);
+        console.error(`Error fetching category ${slug}:`, error);
         return null;
     }
     return data;
 }
 
 export async function fetchStoreProducts(categoryId?: string): Promise<ProductWithCategory[]> {
+    console.log(`Fetching store products (category filtered: ${categoryId || 'None'})...`);
     let query = supabase
         .from('store_products')
         .select(`
@@ -54,6 +58,7 @@ export async function fetchStoreProducts(categoryId?: string): Promise<ProductWi
         return [];
     }
 
+    console.log(`Successfully fetched ${data?.length || 0} products`);
     return (data || []).map((p: any) => ({
         ...p,
         category: p.store_categories

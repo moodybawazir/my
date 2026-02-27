@@ -10,9 +10,13 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const navigate = useNavigate();
 
-    // Fallback to a placeholder if no image exists
-    const displayImage = product.images && Array.isArray(product.images) && product.images.length > 0
-        ? product.images[0] as string
+    // Fallback to a placeholder if no image exists or is incorrectly formatted
+    const parsedImages = Array.isArray(product.images)
+        ? product.images
+        : (typeof product.images === 'string' ? JSON.parse(product.images) : []);
+
+    const displayImage = parsedImages.length > 0 && typeof parsedImages[0] === 'string'
+        ? parsedImages[0]
         : 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=600&auto=format&fit=crop';
 
     return (

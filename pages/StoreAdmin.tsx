@@ -45,97 +45,129 @@ export default function StoreAdmin() {
     const handleCategorySubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSubmitting(true);
-        const fd = new FormData(e.currentTarget);
-        const data = Object.fromEntries(fd.entries());
+        try {
+            const fd = new FormData(e.currentTarget);
+            const data = Object.fromEntries(fd.entries());
 
-        // Handle image upload if a file was selected
-        const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
-        let imageUrl = editingCategory?.image || null;
+            // Handle image upload if a file was selected
+            const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+            let imageUrl = editingCategory?.image || null;
 
-        if (fileInput?.files?.length) {
-            const uploadedUrl = await uploadImage(fileInput.files[0], 'products', 'store_categories');
-            if (uploadedUrl) imageUrl = uploadedUrl;
+            if (fileInput?.files?.length) {
+                const uploadedUrl = await uploadImage(fileInput.files[0], 'products', 'store_categories');
+                if (uploadedUrl) imageUrl = uploadedUrl;
+            }
+
+            const payload = {
+                name: data.name as string,
+                slug: data.slug as string,
+                description: (data.description as string) || null,
+                icon: (data.icon as string) || null,
+                sort_order: parseInt(data.sort_order as string) || 0,
+                image: imageUrl,
+                is_active: data.is_active === 'on'
+            };
+
+            let error;
+            if (editingCategory) {
+                const res = await supabase.from('store_categories').update(payload).eq('id', editingCategory.id);
+                error = res.error;
+            } else {
+                const res = await supabase.from('store_categories').insert([payload]);
+                error = res.error;
+            }
+
+            if (error) throw error;
+
+            setIsCategoryModalOpen(false);
+            setEditingCategory(null);
+            await loadData();
+            alert('تم حفظ القسم بنجاح');
+        } catch (err: any) {
+            console.error('Error saving category:', err);
+            alert('فشل حفظ القسم: ' + (err.message || 'خطأ غير معروف'));
+        } finally {
+            setSubmitting(false);
         }
-
-        const payload = {
-            name: data.name as string,
-            slug: data.slug as string,
-            description: (data.description as string) || null,
-            icon: (data.icon as string) || null,
-            sort_order: parseInt(data.sort_order as string) || 0,
-            image: imageUrl,
-            is_active: data.is_active === 'on'
-        };
-
-        if (editingCategory) {
-            await supabase.from('store_categories').update(payload).eq('id', editingCategory.id);
-        } else {
-            await supabase.from('store_categories').insert([payload]);
-        }
-
-        setIsCategoryModalOpen(false);
-        setEditingCategory(null);
-        await loadData();
-        setSubmitting(false);
     };
 
     const handleDeleteCategory = async (id: string) => {
         if (!window.confirm('هل أنت متأكد من حذف هذا القسم؟')) return;
-        await supabase.from('store_categories').delete().eq('id', id);
-        await loadData();
+        const { error } = await supabase.from('store_categories').delete().eq('id', id);
+        if (error) {
+            alert('فشل حذف القسم: ' + error.message);
+        } else {
+            await loadData();
+        }
     };
 
     // --- Product Handlers ---
     const handleProductSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSubmitting(true);
-        const fd = new FormData(e.currentTarget);
-        const data = Object.fromEntries(fd.entries());
+        try {
+            const fd = new FormData(e.currentTarget);
+            const data = Object.fromEntries(fd.entries());
 
-        const featuresArray = (data.features as string)?.split(',').map(s => s.trim()).filter(Boolean) || [];
+            const featuresArray = (data.features as string)?.split(',').map(s => s.trim()).filter(Boolean) || [];
 
-        // Handle image upload if a file was selected
-        const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
-        let imageUrl = data.existing_image_url as string || null;
+            // Handle image upload if a file was selected
+            const fileInput = e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement;
+            let imageUrl = data.existing_image_url as string || null;
 
-        if (fileInput?.files?.length) {
-            const uploadedUrl = await uploadImage(fileInput.files[0], 'products', 'store_products');
-            if (uploadedUrl) imageUrl = uploadedUrl;
+            if (fileInput?.files?.length) {
+                const uploadedUrl = await uploadImage(fileInput.files[0], 'products', 'store_products');
+                if (uploadedUrl) imageUrl = uploadedUrl;
+            }
+
+            const imagesArray = imageUrl ? [imageUrl] : [];
+
+            const payload = {
+                name: data.name as string,
+                slug: data.slug as string,
+                description: (data.description as string) || null,
+                full_description: (data.full_description as string) || null,
+                price: parseFloat(data.price as string) || 0,
+                sale_price: data.sale_price ? parseFloat(data.sale_price as string) : null,
+                category_id: (data.category_id as string) || null,
+                stock: parseInt(data.stock as string) || 0,
+                features: featuresArray,
+                images: imagesArray,
+                is_active: data.is_active === 'on',
+                is_featured: data.is_featured === 'on',
+            };
+
+            let error;
+            if (editingProduct) {
+                const res = await supabase.from('store_products').update(payload).eq('id', editingProduct.id);
+                error = res.error;
+            } else {
+                const res = await supabase.from('store_products').insert([payload]);
+                error = res.error;
+            }
+
+            if (error) throw error;
+
+            setIsProductModalOpen(false);
+            setEditingProduct(null);
+            await loadData();
+            alert('تم حفظ المنتج بنجاح');
+        } catch (err: any) {
+            console.error('Error saving product:', err);
+            alert('فشل حفظ المنتج: ' + (err.message || 'خطأ غير معروف'));
+        } finally {
+            setSubmitting(false);
         }
-
-        const imagesArray = imageUrl ? [imageUrl] : [];
-
-        const payload = {
-            name: data.name as string,
-            slug: data.slug as string,
-            description: (data.description as string) || null,
-            full_description: (data.full_description as string) || null,
-            price: parseFloat(data.price as string) || 0,
-            sale_price: data.sale_price ? parseFloat(data.sale_price as string) : null,
-            category_id: (data.category_id as string) || null,
-            stock: parseInt(data.stock as string) || 0,
-            features: featuresArray,
-            images: imagesArray,
-            is_active: data.is_active === 'on',
-            is_featured: data.is_featured === 'on',
-        };
-
-        if (editingProduct) {
-            await supabase.from('store_products').update(payload).eq('id', editingProduct.id);
-        } else {
-            await supabase.from('store_products').insert([payload]);
-        }
-
-        setIsProductModalOpen(false);
-        setEditingProduct(null);
-        await loadData();
-        setSubmitting(false);
     };
 
     const handleDeleteProduct = async (id: string) => {
         if (!window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) return;
-        await supabase.from('store_products').delete().eq('id', id);
-        await loadData();
+        const { error } = await supabase.from('store_products').delete().eq('id', id);
+        if (error) {
+            alert('فشل حذف المنتج: ' + error.message);
+        } else {
+            await loadData();
+        }
     };
 
 
