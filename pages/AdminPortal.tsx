@@ -6,7 +6,7 @@ import {
   Activity, Package, FileText, Layout as LayoutIcon,
   Save, X, Download, Filter, TrendingUp, AlertCircle,
   ShoppingCart, Layers, Globe, Image as ImageIcon, Power, ChevronRight, LayoutDashboard,
-  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare, Tag
+  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare, Tag, User
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -638,6 +638,51 @@ const AdminPortal: React.FC = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* --- 3. MESSAGES --- */}
+        {activeMenu === 'messages' && (
+          <div className="space-y-12 animate-in fade-in duration-700">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">رسائل التواصل</h2>
+                <p className="text-[#cfd9cc]/40 mt-4 font-medium text-lg">طلبات واستفسارات العملاء من صفحة التواصل.</p>
+              </div>
+            </header>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {messages.length === 0 ? (
+                <div className="col-span-full py-24 text-center glass rounded-[55px] border-white/5 opacity-50">
+                  <MessageSquare size={48} className="mx-auto text-[#cfd9cc]/30 mb-6" />
+                  <h3 className="text-2xl font-black text-white">لا توجد رسائل جديدة</h3>
+                </div>
+              ) : (
+                messages.map(msg => (
+                  <div key={msg.id} className="glass p-10 rounded-[45px] border-white/5 hover:border-[#cfd9cc]/20 transition-all flex flex-col h-full shadow-2xl relative">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex items-center gap-4 text-[#cfd9cc]">
+                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                          <User size={20} />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-white text-lg">{msg.sender_name}</h4>
+                          <span className="text-sm opacity-60 font-light">{msg.email}</span>
+                        </div>
+                      </div>
+                      <span className="text-xs font-black text-[#cfd9cc]/40 bg-white/5 px-4 py-2 rounded-xl">
+                        {new Date(msg.created_at).toLocaleDateString('ar-SA')}
+                      </span>
+                    </div>
+                    <div className="flex-grow">
+                      <p className="text-[#cfd9cc]/70 text-base leading-relaxed whitespace-pre-wrap bg-black/20 p-6 rounded-3xl border border-white/5 flex-grow font-light">
+                        {msg.message}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
