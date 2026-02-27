@@ -26,6 +26,8 @@ export interface IndustrySubService {
     features: string[];
     is_active: boolean;
     sort_order: number;
+    has_packages?: boolean;
+    packages?: any[];
 }
 
 export interface LoyaltyProgram {

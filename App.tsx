@@ -21,6 +21,7 @@ import ServiceSubscriptionsAdmin from './pages/ServiceSubscriptionsAdmin';
 import Store from './pages/Store';
 import StoreProductDetail from './pages/StoreProductDetail';
 import StoreAdmin from './pages/StoreAdmin';
+import ServicePackages from './pages/ServicePackages';
 import { supabase } from './src/lib/supabase';
 
 // Component to catch and process Supabase implicit grant hashes (like access_token=...) 
@@ -138,6 +139,9 @@ const App: React.FC = () => {
 
               <Route path="/login" element={<Login />} />
               <Route path="/checkout" element={<Checkout />} />
+
+              {/* Dynamic Sub-Service Packages Route */}
+              <Route path="/service/:industryId/:serviceId/packages" element={<ServicePackages />} />
 
               {/* Fallback route to catch Supabase hash fragments */}
               <Route path="*" element={<AuthCallbackHandler />} />

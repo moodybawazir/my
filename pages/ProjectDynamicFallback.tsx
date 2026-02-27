@@ -33,6 +33,11 @@ const ProjectDynamicFallback: React.FC = () => {
     }, [industryId]);
 
     const handleBuySubService = (subService: IndustrySubService) => {
+        if (subService.has_packages) {
+            window.location.hash = `#/service/${industryId || 'dynamic'}/${subService.id}/packages`;
+            return;
+        }
+
         sessionStorage.setItem('checkout_item', JSON.stringify({
             type: 'service',
             id: subService.id,
@@ -135,7 +140,7 @@ const ProjectDynamicFallback: React.FC = () => {
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
                                 <div className="absolute bottom-6 right-6">
                                     <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
-                                        {sub.price}
+                                        {sub.has_packages ? 'باقات متعددة' : sub.price}
                                     </div>
                                 </div>
                             </div>
@@ -157,9 +162,9 @@ const ProjectDynamicFallback: React.FC = () => {
 
                                 <button
                                     onClick={() => handleBuySubService(sub)}
-                                    className="w-full py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95"
+                                    className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
                                 >
-                                    طلب الخدمة الآن <ShoppingBag size={20} />
+                                    {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
                                 </button>
                             </div>
                         </div>
