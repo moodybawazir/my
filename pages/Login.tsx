@@ -11,6 +11,8 @@ import {
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [step, setStep] = useState(1);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<'user' | 'admin'>('user');
   const [loading, setLoading] = useState(false);
@@ -30,29 +32,51 @@ const Login: React.FC = () => {
 
     try {
       if (isLogin) {
-        // --- LOGIN ---
-        if (role === 'admin' && email !== 'mohmmedc@gmail.com') {
-          throw new Error('دخول المسؤول عبر الرابط متاح فقط للمدير المعتمد.');
-        }
-
-        // Both User and Admin use OTP for login now
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            shouldCreateUser: false,
-            emailRedirectTo: window.location.origin,
+        if (!showOtpInput) {
+          // --- SEND OTP ---
+          if (role === 'admin' && email !== 'mohmmedc@gmail.com') {
+            throw new Error('دخول المسؤول متاح فقط للمدير المعتمد.');
           }
-        });
 
-        if (error) {
-          if (error.message.includes('Signups not allowed') || error.status === 400) {
-            throw new Error('هذا البريد الإلكتروني غير مسجل، أو لا يملك صلاحية الدخول.');
+          // Both User and Admin use OTP for login now
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              shouldCreateUser: false,
+            }
+          });
+
+          if (error) {
+            if (error.message.includes('Signups not allowed') || error.status === 400) {
+              throw new Error('هذا البريد الإلكتروني غير مسجل، أو لا يملك صلاحية الدخول.');
+            }
+            throw error;
           }
-          throw error;
-        }
 
-        alert('تم إرسال رابط الدخول إلى بريدك الإلكتروني!');
-        return;
+          setShowOtpInput(true);
+          return;
+        } else {
+          // --- VERIFY OTP ---
+          const { data, error } = await supabase.auth.verifyOtp({
+            email,
+            token: otpCode,
+            type: 'email'
+          });
+
+          if (error) {
+            throw new Error('رمز التحقق غير صحيح أو منتهي الصلاحية.');
+          }
+
+          if (data?.user) {
+            const { data: userData } = await supabase.from('users').select('role').eq('id', data.user.id).single();
+            if (userData?.role === 'admin') {
+              window.location.replace(window.location.origin + '/#/admin');
+            } else {
+              window.location.replace(window.location.origin + '/#/portal');
+            }
+          }
+          return;
+        }
       } else {
         // --- SIGN UP ---
         if (step === 1) {
@@ -141,95 +165,135 @@ const Login: React.FC = () => {
               </div>
             )}
 
-            {/* Role Selector */}
-            <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl mb-10">
-              <button
-                type="button"
-                onClick={() => setRole('user')}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${role === 'user' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'text-[#cfd9cc]/40 hover:text-[#cfd9cc]'}`}
-              >
-                الدخول عبر اللينك
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${role === 'admin' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'text-[#cfd9cc]/40 hover:text-[#cfd9cc]'}`}
-              >
-                دخول غرفة الإدارة
-              </button>
-            </div>
-
-            <form onSubmit={handleAuth} className="space-y-6">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">الاسم الكامل</label>
-                  <div className="relative">
-                    <User className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
-                    <input
-                      type="text"
-                      required={!isLogin}
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
-                      placeholder="الاسم الثلاثي"
-                    />
-                  </div>
+            {/* OTP OR EMAIL FORM */}
+            {isLogin && showOtpInput ? (
+              <form onSubmit={handleAuth} className="space-y-6">
+                <div className="text-center mb-6">
+                  <p className="text-[#cfd9cc] text-sm">أدخل رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني</p>
+                  <p className="text-white font-bold mt-2">{email}</p>
                 </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">البريد الإلكتروني</label>
-                <div className="relative">
-                  <Mail className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
-                    placeholder="name@company.com"
-                  />
-                </div>
-              </div>
-
-              {/* Only show password if it's Sign Up */}
-              {!isLogin && (
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center mr-2">
-                    <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest">كلمة المرور</label>
-                    {isLogin && <button type="button" className="text-xs font-bold text-[#cfd9cc]/40 hover:text-[#cfd9cc]">نسيت كلمة المرور؟</button>}
-                  </div>
+                  <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">رمز التحقق</label>
                   <div className="relative">
                     <Lock className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
                     <input
-                      type={showPassword ? 'text' : 'password'}
+                      type="text"
                       required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-14 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
-                      placeholder="••••••••"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all text-center tracking-[0.5em] font-bold text-xl"
+                      placeholder="123456"
+                      maxLength={6}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute left-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20 hover:text-[#cfd9cc]"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
                   </div>
                 </div>
-              )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black text-xl hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'جاري التحقق...' : 'تأكيد الدخول'} <CheckCircle2 size={20} />
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setShowOtpInput(false)}
+                  className="w-full py-3 rounded-2xl bg-transparent text-[#cfd9cc]/60 font-bold hover:text-white transition-all text-sm"
+                >
+                  العودة لتعديل البريد
+                </button>
+              </form>
+            ) : (
+              <>
+                {/* Role Selector */}
+                <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl mb-10">
+                  <button
+                    type="button"
+                    onClick={() => { setRole('user'); setShowOtpInput(false); }}
+                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${role === 'user' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'text-[#cfd9cc]/40 hover:text-[#cfd9cc]'}`}
+                  >
+                    الدخول عبر اللينك
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setRole('admin'); setShowOtpInput(false); }}
+                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${role === 'admin' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'text-[#cfd9cc]/40 hover:text-[#cfd9cc]'}`}
+                  >
+                    دخول غرفة الإدارة
+                  </button>
+                </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black text-xl hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'جاري المعالجة...' : isLogin ? 'إرسال رابط الدخول' : 'المتابعة'} <ArrowLeft size={20} />
-              </button>
-            </form>
+                <form onSubmit={handleAuth} className="space-y-6">
+                  {!isLogin && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">الاسم الكامل</label>
+                      <div className="relative">
+                        <User className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
+                        <input
+                          type="text"
+                          required={!isLogin}
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
+                          placeholder="الاسم الثلاثي"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-            {/* Social Login - Hidden for now
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">البريد الإلكتروني</label>
+                    <div className="relative">
+                      <Mail className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
+                        placeholder="name@company.com"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Only show password if it's Sign Up */}
+                  {!isLogin && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center mr-2">
+                        <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest">كلمة المرور</label>
+                        {isLogin && <button type="button" className="text-xs font-bold text-[#cfd9cc]/40 hover:text-[#cfd9cc]">نسيت كلمة المرور؟</button>}
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          required
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-14 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute left-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20 hover:text-[#cfd9cc]"
+                        >
+                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black text-xl hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? 'جاري المعالجة...' : isLogin ? 'إرسال رمز التحقق' : 'المتابعة'} <ArrowLeft size={20} />
+                  </button>
+                </form>
+
+                {/* Social Login - Hidden for now
             <div className="mt-12">
               <div className="relative flex items-center gap-4 mb-8">
                 <div className="flex-1 h-px bg-white/5" />
@@ -255,14 +319,16 @@ const Login: React.FC = () => {
             </div>
             */}
 
-            <div className="mt-12 text-center">
-              <button
-                onClick={() => { setIsLogin(!isLogin); setError(null); }}
-                className="text-[#cfd9cc]/40 hover:text-[#cfd9cc] text-sm font-bold"
-              >
-                {isLogin ? 'لا تملك حساباً؟ انضم إلينا الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
-              </button>
-            </div>
+                <div className="mt-12 text-center">
+                  <button
+                    onClick={() => { setIsLogin(!isLogin); setError(null); setShowOtpInput(false); }}
+                    className="text-[#cfd9cc]/40 hover:text-[#cfd9cc] text-sm font-bold"
+                  >
+                    {isLogin ? 'لا تملك حساباً؟ انضم إلينا الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
+                  </button>
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="animate-in fade-in slide-in-from-left duration-500">
