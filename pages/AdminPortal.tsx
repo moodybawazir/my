@@ -84,8 +84,8 @@ const AdminPortal: React.FC = () => {
   useEffect(() => {
     if (isAuthorized !== true) return;
     const fetchData = async () => {
-      // Fetch Customers
-      const { data: customersData } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      // Fetch Customers and exclude admins
+      const { data: customersData } = await supabase.from('users').select('*').eq('role', 'user').order('created_at', { ascending: false });
       if (customersData) setCustomers(customersData);
 
       // Fetch Invoices
@@ -381,19 +381,25 @@ const AdminPortal: React.FC = () => {
     const featuresArray = (data.features as string)?.split(',').map(f => f.trim()).filter(f => f !== '') || [];
 
     if (modalType === 'customer') {
-      const { error } = await (supabase.from('users') as any).upsert({
-        id: editingItem?.id || undefined,
+      if (!editingItem) {
+        alert("إضافة عميل من لوحة التحكم تتطلب تسجيله أولاً. الإضافة المباشرة هنا غير مدعومة بسبب متطلبات المصادقة.");
+        return;
+      }
+
+      const { error } = await (supabase.from('users') as any).update({
         name: data.name,
         email: data.email,
         phone: data.phone,
         balance: parseFloat(data.balance as string) || 0,
         status: editingItem?.status || 'active'
-      });
+      }).eq('id', editingItem.id);
 
       if (!error) {
-        const { data: updated } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+        const { data: updated } = await supabase.from('users').select('*').eq('role', 'user').order('created_at', { ascending: false });
         if (updated) setCustomers(updated);
         setIsModalOpen(false);
+      } else {
+        alert('حدث خطأ أثناء تعديل بيانات العميل');
       }
     } else if (modalType === 'product') {
       const productData: any = {

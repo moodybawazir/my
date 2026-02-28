@@ -31,46 +31,28 @@ const Login: React.FC = () => {
     try {
       if (isLogin) {
         // --- LOGIN ---
-        // --- OTP LOGIN (LINK) ---
-        if (role === 'user' || (role === 'admin' && !password)) {
-          // Security Check: Only mohmmedc@gmail.com can use OTP for Admin
-          if (role === 'admin' && email !== 'mohmmedc@gmail.com') {
-            throw new Error('دخول المسؤول عبر الرابط متاح فقط للمدير المعتمد.');
-          }
-
-          const { error } = await supabase.auth.signInWithOtp({
-            email,
-            options: {
-              shouldCreateUser: false,
-              // Supabase automatically appends #access_token=... to the redirect URL
-              // With HashRouter, if we add #/admin here, it results in https://.../#/admin#access_token=...
-              // This breaks HashRouter. Instead, we redirect to the base URL and let AuthContext 
-              // handle the session, then the user goes to the default route, or we handle it later.
-              emailRedirectTo: 'https://www.basserahai.com',
-            }
-          });
-
-          if (error) {
-            // If user doesn't exist, Supabase returns "Signups not allowed for otp" when shouldCreateUser is false
-            if (error.message.includes('Signups not allowed') || error.status === 400) {
-              throw new Error('هذا البريد الإلكتروني غير مسجل، يرجى إنشاء حساب أولاً.');
-            }
-            throw error;
-          }
-
-          alert('تم إرسال رابط الدخول إلى بريدك الإلكتروني!');
-          return;
+        if (role === 'admin' && email !== 'mohmmedc@gmail.com') {
+          throw new Error('دخول المسؤول عبر الرابط متاح فقط للمدير المعتمد.');
         }
 
-        // --- PASSWORD LOGIN ---
-        const { error } = await supabase.auth.signInWithPassword({
+        // Both User and Admin use OTP for login now
+        const { error } = await supabase.auth.signInWithOtp({
           email,
-          password
+          options: {
+            shouldCreateUser: false,
+            emailRedirectTo: 'https://www.basserahai.com',
+          }
         });
-        if (error) throw error;
 
-        // Success
-        navigate(role === 'admin' ? '/admin' : '/portal');
+        if (error) {
+          if (error.message.includes('Signups not allowed') || error.status === 400) {
+            throw new Error('هذا البريد الإلكتروني غير مسجل، أو لا يملك صلاحية الدخول.');
+          }
+          throw error;
+        }
+
+        alert('تم إرسال رابط الدخول إلى بريدك الإلكتروني!');
+        return;
       } else {
         // --- SIGN UP ---
         if (step === 1) {
@@ -210,8 +192,8 @@ const Login: React.FC = () => {
                 </div>
               </div>
 
-              {/* Only show password if it's Admin or Sign Up */}
-              {(role === 'admin' || !isLogin) && (
+              {/* Only show password if it's Sign Up */}
+              {!isLogin && (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center mr-2">
                     <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest">كلمة المرور</label>
@@ -243,7 +225,7 @@ const Login: React.FC = () => {
                 disabled={loading}
                 className="w-full py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black text-xl hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'جاري المعالجة...' : ((role === 'user' || (role === 'admin' && !password)) ? 'إرسال رابط الدخول' : (isLogin ? 'دخول' : 'المتابعة'))} <ArrowLeft size={20} />
+                {loading ? 'جاري المعالجة...' : isLogin ? 'إرسال رابط الدخول' : 'المتابعة'} <ArrowLeft size={20} />
               </button>
             </form>
 
