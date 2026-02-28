@@ -5,6 +5,7 @@ import {
   ExternalLink, ChevronLeft, Plus, Award, Package,
   CheckCircle2, AlertCircle, ShoppingBag
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext';
 import { supabase } from '../src/lib/supabase';
 
@@ -15,6 +16,14 @@ const UserPortal: React.FC = () => {
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Admin redirect safety hatch
+  useEffect(() => {
+    if (profile?.role === 'admin') {
+      navigate('/admin', { replace: true });
+    }
+  }, [profile, navigate]);
 
   useEffect(() => {
     const fetchUserData = async () => {
