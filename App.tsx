@@ -57,14 +57,17 @@ const AuthCallbackHandler = () => {
         refresh_token: refreshToken
       }).then(async () => {
         // Clean URL and redirect based on role
-        const userResp = await supabase.auth.getUser();
-        supabase.from('users').select('role').eq('id', userResp.data.user?.id).single().then(({ data }) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.from('users').select('role').eq('id', user.id).single();
           if (data?.role === 'admin') {
-            window.location.href = window.location.origin + '/#/admin';
+            window.location.replace(window.location.origin + '/#/admin');
           } else {
-            window.location.href = window.location.origin + '/#/portal';
+            window.location.replace(window.location.origin + '/#/portal');
           }
-        });
+        } else {
+          window.location.replace(window.location.origin + '/#/');
+        }
       });
     } else if (searchParams.toString() === "" && window.location.hash.includes("access_token")) {
       // Still loading params
