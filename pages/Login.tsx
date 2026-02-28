@@ -40,7 +40,7 @@ const Login: React.FC = () => {
           email,
           options: {
             shouldCreateUser: false,
-            emailRedirectTo: 'https://www.basserahai.com',
+            emailRedirectTo: window.location.origin,
           }
         });
 

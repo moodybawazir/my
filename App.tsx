@@ -55,9 +55,16 @@ const AuthCallbackHandler = () => {
       supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken
-      }).then(() => {
-        // Clean URL and redirect
-        window.location.href = window.location.origin + '/#/portal';
+      }).then(async () => {
+        // Clean URL and redirect based on role
+        const userResp = await supabase.auth.getUser();
+        supabase.from('users').select('role').eq('id', userResp.data.user?.id).single().then(({ data }) => {
+          if (data?.role === 'admin') {
+            window.location.href = window.location.origin + '/#/admin';
+          } else {
+            window.location.href = window.location.origin + '/#/portal';
+          }
+        });
       });
     } else if (searchParams.toString() === "" && window.location.hash.includes("access_token")) {
       // Still loading params
