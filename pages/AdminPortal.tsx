@@ -1402,9 +1402,35 @@ const AdminPortal: React.FC = () => {
                         </td>
                         <td className="p-10 text-xl font-black text-white">{order.total_amount} ر.س</td>
                         <td className="p-10">
-                          <span className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase ${order.payment_status === 'paid' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                            {order.payment_status || order.status}
-                          </span>
+                          <select
+                            value={order.status || 'قيد الإنشاء'}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+
+                              // Update local state
+                              setOrders(orders.map(o => o.id === order.id ? { ...o, status: newStatus } : o));
+
+                              // Update database
+                              const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', order.id);
+
+                              if (!error && newStatus === 'تم التنفيذ') {
+                                alert('تم إرسال بريد إلكتروني للعميل بنجاح');
+                              } else if (error) {
+                                alert('حدث خطأ أثناء تحديث حالة الطلب');
+                              }
+                            }}
+                            className={`px-4 py-2 rounded-xl text-xs font-black outline-none appearance-none cursor-pointer border ${order.status === 'تم التنفيذ'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                                : order.status === 'قيد الإنشاء'
+                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              }`}
+                          >
+                            <option value="قيد الإنشاء" className="bg-[#0d2226] text-white">قيد الإنشاء</option>
+                            <option value="جاري المعالجة" className="bg-[#0d2226] text-white">جاري المعالجة</option>
+                            <option value="تم التنفيذ" className="bg-[#0d2226] text-white">تم التنفيذ</option>
+                            <option value="ملغي" className="bg-[#0d2226] text-white">ملغي</option>
+                          </select>
                         </td>
                         <td className="p-10 text-sm text-[#cfd9cc]/40">{new Date(order.created_at).toLocaleDateString('ar-SA')}</td>
                         <td className="p-10 text-left">

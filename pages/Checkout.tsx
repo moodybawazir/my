@@ -46,23 +46,46 @@ const Checkout: React.FC = () => {
                 return;
             }
 
-            // In a real scenario, you would call a backend or Lemon Squeezy API 
-            // to generate a unique checkout link for this specific item.
-            // For this implementation, we assume products are set up and we use the Store URL with custom data.
+            // MOCK CHECKOUT FLOW (Bypass Lemon Squeezy)
+            // Instead of redirecting to the payment gateway, we directly create an order in the database
+            // and act as if it was successfully paid.
 
-            // NOTE: Replace this with your actual Lemon Squeezy link
-            // We append custom data (user_id) so the webhook can link the payment to the user.
-            const checkoutBaseUrl = "https://baseerah.lemonsqueezy.com/checkout/buy/";
-            // Using the productId if available, otherwise a generic one for testing
-            const productId = itemData?.ls_variant_id || "test-product-id";
+            const orderId = crypto.randomUUID();
 
-            const checkoutUrl = `${checkoutBaseUrl}${productId}?checkout[custom][user_id]=${user.id}&checkout[email]=${user.email}`;
+            const { error: orderError } = await supabase.from('orders').insert({
+                id: orderId,
+                user_id: user.id,
+                total_amount: itemPrice,
+                status: 'قيد الإنشاء', // Initial status
+                payment_status: 'paid', // Mock paid status
+                ls_order_id: `MOCK-${Date.now().toString().slice(-6)}`,
+            });
 
-            // Redirect to Lemon Squeezy
-            window.location.href = checkoutUrl;
+            if (orderError) throw orderError;
+
+            // Optionally insert into order_items if you want to track line items
+            if (itemId) {
+                await supabase.from('order_items').insert({
+                    order_id: orderId,
+                    [itemType === 'service' ? 'service_id' : 'product_id']: itemId,
+                    title: itemName,
+                    price: itemPrice
+                });
+            }
+
+            // Simulate network delay for realistic experience
+            setTimeout(() => {
+                setLoading(false);
+                setStep(3); // Go directly to success screen
+
+                // Navigate away after success
+                setTimeout(() => {
+                    navigate('/portal');
+                }, 5000);
+            }, 1500);
 
         } catch (err: any) {
-            setError(err.message || 'حدث خطأ أثناء الانتقال لبوابة الدفع');
+            setError(err.message || 'حدث خطأ أثناء إتمام الطلب');
             setLoading(false);
         }
     };
@@ -170,10 +193,9 @@ const Checkout: React.FC = () => {
                                     <div className="w-20 h-20 bg-[#cfd9cc]/10 rounded-full flex items-center justify-center mx-auto mb-8">
                                         <Wallet className="text-[#cfd9cc]" size={40} />
                                     </div>
-                                    <h2 className="text-3xl font-black text-white mb-4">الدفع عبر Lemon Squeezy</h2>
+                                    <h2 className="text-3xl font-black text-white mb-4">إنشاء الطلب والحجز</h2>
                                     <p className="text-[#cfd9cc]/60 mb-10 leading-relaxed">
-                                        سيتم تحويلك الآن إلى بوابة الدفع العالمية Lemon Squeezy لضمان أمان عمليتك.
-                                        نحن ندعم جميع البطاقات البنكية، Apple Pay و Google Pay.
+                                        سيتم الآن تسجيل طلبك في النظام واعتماده مباشرة.
                                     </p>
 
                                     <motion.button
@@ -186,10 +208,10 @@ const Checkout: React.FC = () => {
                                         {loading ? (
                                             <div className="flex items-center gap-2">
                                                 <div className="w-5 h-5 border-4 border-[#0d2226]/20 border-t-[#0d2226] rounded-full animate-spin" />
-                                                جاري التحويل...
+                                                جاري الاعتماد...
                                             </div>
                                         ) : (
-                                            <>الانتقال للدفع الآمن <ArrowRight size={24} /></>
+                                            <>إتمام الطلب <ArrowRight size={24} /></>
                                         )}
                                     </motion.button>
 
