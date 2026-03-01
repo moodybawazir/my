@@ -20,7 +20,8 @@ const UserPortal: React.FC = () => {
 
   // Admin redirect safety hatch
   useEffect(() => {
-    if (profile?.role === 'admin' || user?.email === 'odood48@gmail.com' || user?.email === 'mohmmedc@gmail.com') {
+    const isAdminEmail = user?.email === 'odood48@gmail.com' || user?.email === 'mohmmedc@gmail.com' || user?.email?.toLowerCase() === 'fathi1419@gmail.com';
+    if (profile?.role === 'admin' || isAdminEmail) {
       navigate('/admin', { replace: true });
     }
   }, [profile, user, navigate]);

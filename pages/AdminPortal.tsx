@@ -68,7 +68,10 @@ const AdminPortal: React.FC = () => {
       }
       const { data, error } = await supabase.from('users').select('role').eq('id', user.id).single();
 
-      const isSuperAdminEmail = user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com';
+      const isSuperAdminEmail =
+        user.email === 'odood48@gmail.com' ||
+        user.email === 'mohmmedc@gmail.com' ||
+        user.email?.toLowerCase() === 'fathi1419@gmail.com';
       const isRoleAdmin = !error && data && (data as any).role === 'admin';
 
       if (!isRoleAdmin && !isSuperAdminEmail) {
