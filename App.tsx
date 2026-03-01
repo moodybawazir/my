@@ -62,7 +62,12 @@ const AuthCallbackHandler = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data } = await supabase.from('users').select('role').eq('id', user.id).single();
-          if (data?.role === 'admin') {
+          const isAdminEmail =
+            user.email === 'odood48@gmail.com' ||
+            user.email === 'mohmmedc@gmail.com' ||
+            user.email?.toLowerCase() === 'fathi1419@gmail.com';
+
+          if (data?.role === 'admin' || isAdminEmail) {
             window.location.replace(window.location.origin + '/#/admin');
           } else {
             window.location.replace(window.location.origin + '/#/portal');
