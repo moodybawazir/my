@@ -35,9 +35,11 @@ const Login: React.FC = () => {
           return;
         }
 
+        console.log('Sending OTP to:', email);
         const { data, error } = await supabase.functions.invoke('send-otp', {
           body: { email }
         });
+        console.log('Send OTP Response:', { data, error });
 
         if (error) {
           console.error(error);
@@ -55,9 +57,11 @@ const Login: React.FC = () => {
           ? { email, code: otpCode }
           : { email, code: otpCode, fullName, phone };
 
+        console.log('Verifying OTP for:', email);
         const { data, error } = await supabase.functions.invoke('verify-otp', {
           body: verifyBody
         });
+        console.log('Verify OTP Response:', { data, error });
 
         if (error) {
           console.error(error);
@@ -167,7 +171,7 @@ const Login: React.FC = () => {
                 <form onSubmit={handleAuth} className="space-y-6">
                   {!isLogin && (
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">الاسم الكامل</label>
+                      <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest mr-2">الاسم</label>
                       <div className="relative">
                         <User className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
                         <input
@@ -176,7 +180,7 @@ const Login: React.FC = () => {
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                           className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
-                          placeholder="الاسم الثلاثي"
+                          placeholder="اسمك بالكامل"
                         />
                       </div>
                     </div>

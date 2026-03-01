@@ -2,7 +2,7 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
-  Cpu, Menu, X, LogIn, MapPin, Mail, Phone, User as UserIcon, ShoppingBag
+  Cpu, Menu, X, LogIn, LogOut, MapPin, Mail, Phone, User as UserIcon, ShoppingBag
 } from 'lucide-react';
 import { useAuth } from '../src/context/AuthContext';
 import { supabase } from '../src/lib/supabase';
@@ -24,6 +24,8 @@ export const Layout: React.FC = () => {
       supabase.from('users').select('role').eq('id', user.id).single().then(({ data }) => {
         if (data) setUserRole(data.role);
       });
+    } else {
+      setUserRole(null);
     }
 
     const fetchFooterData = async () => {
@@ -82,9 +84,18 @@ export const Layout: React.FC = () => {
               </button>
 
               {user ? (
-                <Link to={(userRole === 'admin' || user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com') ? '/admin' : '/portal'} className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow flex items-center gap-2">
-                  <UserIcon size={18} /> أهلاً بك، {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link to={(userRole === 'admin' || user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com') ? '/admin' : '/portal'} className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow flex items-center gap-2">
+                    <UserIcon size={18} /> أهلاً بك، {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                  </Link>
+                  <button
+                    onClick={() => supabase.auth.signOut()}
+                    className="p-2.5 text-[#cfd9cc]/40 hover:text-red-400 transition-luxury hover:bg-red-400/10 rounded-xl"
+                    title="تسجيل الخروج"
+                  >
+                    <LogOut size={20} />
+                  </button>
+                </div>
               ) : (
                 <>
                   <Link to="/login" className="text-sm font-bold text-[#cfd9cc] hover:text-white flex items-center gap-2 transition-luxury">

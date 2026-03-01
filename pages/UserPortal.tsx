@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Clock, CreditCard, Cpu, Settings, Activity,
   ExternalLink, ChevronLeft, Plus, Award, Package,
-  CheckCircle2, AlertCircle, ShoppingBag
+  CheckCircle2, AlertCircle, ShoppingBag, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext';
@@ -92,6 +92,13 @@ const UserPortal: React.FC = () => {
                 <div className="text-2xl font-black text-white">{points.toLocaleString()} نقطة</div>
               </div>
             </div>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="glass p-4 rounded-2xl border-red-500/20 text-red-400 hover:bg-red-400/10 transition-all flex items-center gap-3 font-black"
+            >
+              <LogOut size={24} />
+              <span className="hidden md:block">تسجيل الخروج</span>
+            </button>
           </div>
         </div>
 

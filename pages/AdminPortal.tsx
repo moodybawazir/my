@@ -529,7 +529,7 @@ const AdminPortal: React.FC = () => {
           ))}
         </nav>
 
-        <button onClick={() => navigate('/login')} className="flex items-center gap-4 px-6 py-5 text-red-400 hover:bg-red-400/10 rounded-2xl transition-all font-black text-lg mt-auto">
+        <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-4 px-6 py-5 text-red-400 hover:bg-red-400/10 rounded-2xl transition-all font-black text-lg mt-auto">
           <LogOut size={24} />
           تسجيل الخروج
         </button>
