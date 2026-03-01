@@ -36,21 +36,13 @@ const Login: React.FC = () => {
         }
 
         // --- FINAL REGISTRATION STEP ---
-        console.log('Registering user:', email);
-        const randomPassword = Math.random().toString(36).slice(-12) + "A1!";
-        const { error: signUpError } = await supabase.auth.signUp({
-          email,
-          password: randomPassword,
-          options: {
-            data: { full_name: fullName, phone: phone, role: 'user' }
-          }
+        console.log('Registering user via Edge Function:', email);
+        const { data, error: regError } = await supabase.functions.invoke('register-user', {
+          body: { email, fullName, phone }
         });
 
-        if (signUpError) {
-          if (signUpError.message.includes('already registered')) {
-            throw new Error('هذا البريد مسجل مسبقاً. يرجى تسجيل الدخول.');
-          }
-          throw signUpError;
+        if (regError || data?.error) {
+          throw new Error(regError?.message || data?.error || 'فشل تسجيل الحساب.');
         }
 
         setShowSuccess(true);
