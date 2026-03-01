@@ -160,10 +160,10 @@ const Login: React.FC = () => {
                 <button
                   type="button"
                   disabled={loading}
-                  onClick={() => setShowOtpInput(false)}
+                  onClick={() => { setShowOtpInput(false); setOtpCode(''); }}
                   className="w-full py-3 rounded-2xl bg-transparent text-[#cfd9cc]/60 font-bold hover:text-white transition-all text-sm"
                 >
-                  العودة لتعديل البريد
+                  العودة لتعديل البيانات
                 </button>
               </form>
             ) : (
@@ -179,7 +179,7 @@ const Login: React.FC = () => {
                           required={!isLogin}
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all font-bold"
                           placeholder="اسمك بالكامل"
                         />
                       </div>
@@ -258,9 +258,16 @@ const Login: React.FC = () => {
                   disabled={loading}
                   className="flex-1 py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black text-xl hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50"
                 >
-                  {loading ? 'جاري التسجيل...' : 'إكمال التسجيل'} <CheckCircle2 size={20} />
+                  {loading ? 'جاري الإرسال...' : 'إرسال رمز التحقق'} <ArrowLeft size={20} />
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={() => { setStep(1); setShowOtpInput(false); setError(null); }}
+                className="w-full py-3 text-[#cfd9cc]/40 hover:text-white text-sm font-bold transition-colors mt-4"
+              >
+                البدء من جديد
+              </button>
             </form>
           </div>
         )}
