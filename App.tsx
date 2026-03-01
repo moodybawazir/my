@@ -92,9 +92,13 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
 
   React.useEffect(() => {
     if (requireAdmin && user) {
-      supabase.from('users').select('role').eq('id', user.id).single().then(({ data }) => {
-        setIsAdmin(data?.role === 'admin');
-      });
+      if (user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com') {
+        setIsAdmin(true);
+      } else {
+        supabase.from('users').select('role').eq('id', user.id).single().then(({ data }) => {
+          setIsAdmin(data?.role === 'admin');
+        });
+      }
     }
   }, [user, requireAdmin]);
 

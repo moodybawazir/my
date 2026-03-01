@@ -20,10 +20,10 @@ const UserPortal: React.FC = () => {
 
   // Admin redirect safety hatch
   useEffect(() => {
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || user?.email === 'odood48@gmail.com' || user?.email === 'mohmmedc@gmail.com') {
       navigate('/admin', { replace: true });
     }
-  }, [profile, navigate]);
+  }, [profile, user, navigate]);
 
   useEffect(() => {
     const fetchUserData = async () => {
