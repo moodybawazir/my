@@ -36,9 +36,6 @@ const Login: React.FC = () => {
           // Both User and Admin use OTP for login now
           const { error } = await supabase.auth.signInWithOtp({
             email,
-            options: {
-              shouldCreateUser: false,
-            }
           });
 
           if (error) {
