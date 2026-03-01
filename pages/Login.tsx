@@ -81,11 +81,12 @@ const Login: React.FC = () => {
             throw new Error('فشل إنشاء جلسة البيانات. يرجى المحاولة مجدداً.');
           }
 
-          const { data: userData } = await supabase.from('users').select('role').eq('id', (await supabase.auth.getUser()).data.user?.id).single();
+          const { data: userData } = await supabase.from('users').select('role').eq('email', email.trim().toLowerCase()).single();
+
           if (userData?.role === 'admin') {
-            navigate('/admin');
+            window.location.replace('/#/admin');
           } else {
-            navigate('/portal');
+            window.location.replace('/#/portal');
           }
         }
       }
