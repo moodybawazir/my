@@ -14,7 +14,6 @@ const Login: React.FC = () => {
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<'user' | 'admin'>('user');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -34,10 +33,6 @@ const Login: React.FC = () => {
       if (isLogin) {
         if (!showOtpInput) {
           // --- SEND OTP ---
-          if (role === 'admin' && email !== 'mohmmedc@gmail.com') {
-            throw new Error('دخول المسؤول متاح فقط للمدير المعتمد.');
-          }
-
           // Both User and Admin use OTP for login now
           const { error } = await supabase.auth.signInWithOtp({
             email,
@@ -205,23 +200,7 @@ const Login: React.FC = () => {
               </form>
             ) : (
               <>
-                {/* Role Selector */}
-                <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl mb-10">
-                  <button
-                    type="button"
-                    onClick={() => { setRole('user'); setShowOtpInput(false); }}
-                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${role === 'user' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'text-[#cfd9cc]/40 hover:text-[#cfd9cc]'}`}
-                  >
-                    الدخول عبر اللينك
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setRole('admin'); setShowOtpInput(false); }}
-                    className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${role === 'admin' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'text-[#cfd9cc]/40 hover:text-[#cfd9cc]'}`}
-                  >
-                    دخول غرفة الإدارة
-                  </button>
-                </div>
+                {/* Role Selector Removed: OTP is the only way in */}
 
                 <form onSubmit={handleAuth} className="space-y-6">
                   {!isLogin && (
