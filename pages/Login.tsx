@@ -1,11 +1,9 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import {
-  Cpu, Mail, Lock, Phone, ArrowLeft, Eye,
-  EyeOff, ShieldCheck, Chrome, User, Github,
-  ArrowRight, CheckCircle2, AlertCircle
+  Mail, Lock, Phone, ArrowLeft,
+  ShieldCheck, User, ArrowRight, CheckCircle2, AlertCircle
 } from 'lucide-react';
 
 const Login: React.FC = () => {
@@ -13,14 +11,12 @@ const Login: React.FC = () => {
   const [step, setStep] = useState(1);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [otpCode, setOtpCode] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Form States
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
 
@@ -30,102 +26,69 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      if (isLogin) {
-        if (!showOtpInput) {
-          // --- SEND OTP ---
-          // Both User and Admin use OTP for login now
-          const { error } = await supabase.auth.signInWithOtp({
-            email,
-          });
-
-          if (error) {
-            if (error.message.includes('Signups not allowed') || error.status === 400) {
-              throw new Error('هذا البريد الإلكتروني غير مسجل، أو لا يملك صلاحية الدخول.');
-            }
-            throw error;
-          }
-
-          setShowOtpInput(true);
-          return;
-        } else {
-          // --- VERIFY OTP ---
-          const { data, error } = await supabase.auth.verifyOtp({
-            email,
-            token: otpCode,
-            type: 'email'
-          });
-
-          if (error) {
-            throw new Error('رمز التحقق غير صحيح أو منتهي الصلاحية.');
-          }
-
-          if (data?.user) {
-            const { data: userData } = await supabase.from('users').select('role').eq('id', data.user.id).single();
-            if (userData?.role === 'admin') {
-              window.location.replace(window.location.origin + '/#/admin');
-            } else {
-              window.location.replace(window.location.origin + '/#/portal');
-            }
-          }
-          return;
-        }
-      } else {
-        // --- SIGN UP ---
-        if (step === 1) {
+      if (!showOtpInput) {
+        // --- SEND CUSTOM OTP via Resend ---
+        // For both Login and Signup phase 1
+        if (!isLogin && step === 1) {
           setStep(2);
           setLoading(false);
           return;
         }
 
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: fullName,
-              phone: phone,
-              role: 'user' // Any registration via this form is a customer
-            },
-            emailRedirectTo: 'https://www.basserahai.com/#/portal'
-          }
+        const { data, error } = await supabase.functions.invoke('send-otp', {
+          body: { email }
         });
-        if (error) throw error;
 
-        // Success - Direct redirect to portal for customers
-        navigate('/portal');
+        if (error) {
+          console.error(error);
+          throw new Error('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة لاحقاً.');
+        }
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        setShowOtpInput(true);
+      } else {
+        // --- VERIFY CUSTOM OTP & CREATE SILENT API SESSION ---
+        const verifyBody = isLogin
+          ? { email, code: otpCode }
+          : { email, code: otpCode, fullName, phone };
+
+        const { data, error } = await supabase.functions.invoke('verify-otp', {
+          body: verifyBody
+        });
+
+        if (error) {
+          console.error(error);
+          throw new Error('حدث خطأ أثناء التحقق من الرمز.');
+        }
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        if (data?.api_session_key) {
+          // This silently logs the user in creating the Supabase Auth Session
+          // strictly for Data Store (RLS) usage, without triggering ANY emails whatsoever.
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: data.api_session_key
+          });
+
+          if (signInError) {
+            console.error(signInError);
+            throw new Error('فشل إنشاء جلسة البيانات. يرجى المحاولة مجدداً.');
+          }
+
+          // Successfully established Native API Session quietly, redirect!
+          window.location.replace('/#/portal');
+        }
       }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/#/portal`
-        }
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
-  const handleGitHubLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: `${window.location.origin}/#/portal`
-        }
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      setError(err.message);
     }
   };
 
@@ -137,7 +100,7 @@ const Login: React.FC = () => {
 
       <div className="w-full max-w-xl glass p-10 md:p-16 rounded-[60px] border-white/5 relative z-10 animate-in fade-in zoom-in duration-500">
 
-        {step === 1 ? (
+        {step === 1 || showOtpInput ? (
           <>
             <div className="text-center mb-12">
               <div className="w-20 h-20 mx-auto mb-6 transition-luxury hover:scale-110">
@@ -146,7 +109,7 @@ const Login: React.FC = () => {
               <h1 className="text-4xl font-black text-white mb-3">
                 {isLogin ? 'مرحباً بعودتك' : 'انضم إلى Baseerah AI'}
               </h1>
-              <p className="text-[#cfd9cc]/40">استكمل رحلتك في عالم الأتمتة الذكية</p>
+              <p className="text-[#cfd9cc]/40">برمجيات ذكية لأعمال أذكى</p>
             </div>
 
             {/* ERROR ALERT */}
@@ -157,8 +120,7 @@ const Login: React.FC = () => {
               </div>
             )}
 
-            {/* OTP OR EMAIL FORM */}
-            {isLogin && showOtpInput ? (
+            {showOtpInput ? (
               <form onSubmit={handleAuth} className="space-y-6">
                 <div className="text-center mb-6">
                   <p className="text-[#cfd9cc] text-sm">أدخل رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني</p>
@@ -175,7 +137,7 @@ const Login: React.FC = () => {
                       onChange={(e) => setOtpCode(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all text-center tracking-[0.5em] font-bold text-xl"
                       placeholder="123456"
-                      maxLength={8}
+                      maxLength={6}
                     />
                   </div>
                 </div>
@@ -197,8 +159,6 @@ const Login: React.FC = () => {
               </form>
             ) : (
               <>
-                {/* Role Selector Removed: OTP is the only way in */}
-
                 <form onSubmit={handleAuth} className="space-y-6">
                   {!isLogin && (
                     <div className="space-y-2">
@@ -226,39 +186,12 @@ const Login: React.FC = () => {
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all text-left"
+                        dir="ltr"
                         placeholder="name@company.com"
                       />
                     </div>
                   </div>
-
-                  {/* Only show password if it's Sign Up */}
-                  {!isLogin && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center mr-2">
-                        <label className="text-xs font-black text-[#cfd9cc]/30 uppercase tracking-widest">كلمة المرور</label>
-                        {isLogin && <button type="button" className="text-xs font-bold text-[#cfd9cc]/40 hover:text-[#cfd9cc]">نسيت كلمة المرور؟</button>}
-                      </div>
-                      <div className="relative">
-                        <Lock className="absolute right-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20" size={18} />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          required
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-14 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all"
-                          placeholder="••••••••"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute left-6 top-1/2 -translate-y-1/2 text-[#cfd9cc]/20 hover:text-[#cfd9cc]"
-                        >
-                          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   <button
                     type="submit"
@@ -269,36 +202,10 @@ const Login: React.FC = () => {
                   </button>
                 </form>
 
-                {/* Social Login - Hidden for now
-            <div className="mt-12">
-              <div className="relative flex items-center gap-4 mb-8">
-                <div className="flex-1 h-px bg-white/5" />
-                <span className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.3em]">أو عبر منصات التواصل</span>
-                <div className="flex-1 h-px bg-white/5" />
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                <button
-                  onClick={handleGoogleLogin}
-                  type="button"
-                  className="flex items-center justify-center gap-3 bg-white/5 border border-white/10 py-4 rounded-2xl text-white font-bold hover:bg-white/10 transition-all text-sm relative overflow-hidden group"
-                >
-                  <Chrome size={20} className="text-[#cfd9cc]" /> الاستمرار باستخدام Google
-                </button>
-                <button
-                  onClick={handleGitHubLogin}
-                  type="button"
-                  className="flex items-center justify-center gap-3 bg-white/5 border border-white/10 py-4 rounded-2xl text-white font-bold hover:bg-white/10 transition-all text-sm relative overflow-hidden group"
-                >
-                  <Github size={20} className="text-[#cfd9cc]" /> الاستمرار باستخدام GitHub
-                </button>
-              </div>
-            </div>
-            */}
-
                 <div className="mt-12 text-center">
                   <button
                     onClick={() => { setIsLogin(!isLogin); setError(null); setShowOtpInput(false); }}
-                    className="text-[#cfd9cc]/40 hover:text-[#cfd9cc] text-sm font-bold"
+                    className="text-[#cfd9cc]/40 hover:text-[#cfd9cc] text-sm font-bold transition-colors"
                   >
                     {isLogin ? 'لا تملك حساباً؟ انضم إلينا الآن' : 'لديك حساب بالفعل؟ سجل دخولك'}
                   </button>
