@@ -83,9 +83,9 @@ const Login: React.FC = () => {
 
           const { data: userData } = await supabase.from('users').select('role').eq('id', (await supabase.auth.getUser()).data.user?.id).single();
           if (userData?.role === 'admin') {
-            window.location.replace('/#/admin');
+            navigate('/admin');
           } else {
-            window.location.replace('/#/portal');
+            navigate('/portal');
           }
         }
       }

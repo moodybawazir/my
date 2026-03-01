@@ -5,11 +5,21 @@ import {
   Cpu, Menu, X, LogIn, MapPin, Mail, Phone, User as UserIcon
 } from 'lucide-react';
 import { useAuth } from '../src/context/AuthContext';
+import { supabase } from '../src/lib/supabase';
 
 export const Layout: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { user } = useAuth();
+  const [userRole, setUserRole] = React.useState<string | null>(null);
   const location = useLocation();
+
+  React.useEffect(() => {
+    if (user) {
+      supabase.from('users').select('role').eq('id', user.id).single().then(({ data }) => {
+        if (data) setUserRole(data.role);
+      });
+    }
+  }, [user]);
 
   const navLinks = [
     { name: 'الرئيسية', path: '/' },
@@ -43,7 +53,7 @@ export const Layout: React.FC = () => {
 
             <div className="flex items-center gap-4 border-r border-white/10 pr-8 mr-2">
               {user ? (
-                <Link to={user.user_metadata?.role === 'admin' ? '/admin' : '/portal'} className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow flex items-center gap-2">
+                <Link to={userRole === 'admin' ? '/admin' : '/portal'} className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow flex items-center gap-2">
                   <UserIcon size={18} /> أهلاً بك، {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
                 </Link>
               ) : (
@@ -72,7 +82,7 @@ export const Layout: React.FC = () => {
               ))}
               <hr className="border-white/5" />
               {user ? (
-                <Link to={user.user_metadata?.role === 'admin' ? '/admin' : '/portal'} onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow flex items-center justify-center gap-2">
+                <Link to={userRole === 'admin' ? '/admin' : '/portal'} onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow flex items-center justify-center gap-2">
                   <UserIcon size={24} /> حسابي
                 </Link>
               ) : (
