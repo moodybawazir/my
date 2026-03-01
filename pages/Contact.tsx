@@ -194,6 +194,7 @@ ${formData.message}
                       <option className="bg-[#0d2226] text-[#cfd9cc]">رعاية صحية</option>
                       <option className="bg-[#0d2226] text-[#cfd9cc]">ذكاء اصطناعي مخصص</option>
                       <option className="bg-[#0d2226] text-[#cfd9cc]">محاسبة ومالية</option>
+                      <option className="bg-[#0d2226] text-[#cfd9cc]">المطاعم والكافيهات</option>
                     </select>
                   </div>
                   <div className="col-span-full space-y-4">

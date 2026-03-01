@@ -7,10 +7,12 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../src/lib/supabase';
+import { useCart } from '../src/context/CartContext';
 
 const ProductDetail: React.FC = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
+    const { addItem } = useCart();
     const [product, setProduct] = useState<any>(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [similarProducts, setSimilarProducts] = useState<any[]>([]);
@@ -60,15 +62,22 @@ const ProductDetail: React.FC = () => {
 
     const handleBuyNow = () => {
         if (!product) return;
-        sessionStorage.setItem('checkout_item', JSON.stringify({
-            type: 'product',
+
+        let numericPrice = 0;
+        if (typeof product.price === 'string') {
+            numericPrice = parseFloat(product.price.replace(/[^\d.]/g, '')) || 0;
+        } else {
+            numericPrice = product.price || 0;
+        }
+
+        addItem({
             id: product.id,
             title: product.title,
-            price: product.price,
-            description: product.desc,
-            instant: true // Direct to payment
-        }));
-        navigate('/checkout');
+            price: numericPrice,
+            type: 'product',
+            quantity: 1,
+            image_url: product.image
+        });
     };
 
     const handleNextImage = () => {
@@ -222,7 +231,7 @@ const ProductDetail: React.FC = () => {
                                         onClick={handleBuyNow}
                                         className="h-24 px-12 bg-[#cfd9cc] text-[#0d2226] rounded-[30px] font-black text-2xl flex items-center gap-4 shadow-xl transition-all w-full sm:w-auto justify-center"
                                     >
-                                        اقتنِ الآن <ShoppingBag size={32} />
+                                        أضف للسلة <ShoppingBag size={32} />
                                     </motion.button>
                                 </div>
                             </div>

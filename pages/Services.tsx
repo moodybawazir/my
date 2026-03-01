@@ -58,7 +58,7 @@ const Services: React.FC = () => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#cfd9cc]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                 <div className="flex justify-between items-start mb-10">
-                  <div className={`w-20 h-20 rounded-[30px] ${cat.color || 'bg-[#1e403a]'} flex items-center justify-center text-[#0d2226] shadow-2xl group-hover:scale-110 transition-transform duration-500 overflow-hidden`}>
+                  <div className={`w-20 h-20 rounded-[30px] ${cat.color || 'bg-[#1e403a]'} flex items-center justify-center text-[#cfd9cc] shadow-2xl group-hover:scale-110 transition-transform duration-500 overflow-hidden`}>
                     {cat.image_url ? (
                       <img src={cat.image_url} className="w-full h-full object-cover" alt="" />
                     ) : (

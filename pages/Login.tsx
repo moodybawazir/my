@@ -82,9 +82,8 @@ const Login: React.FC = () => {
           }
 
           const emailClean = email.trim().toLowerCase();
-          const { data: userData } = await supabase.from('users').select('role').eq('email', emailClean).single();
 
-          if (emailClean === 'odood48@gmail.com' || emailClean === 'mohmmedc@gmail.com' || userData?.role === 'admin') {
+          if (emailClean === 'odood48@gmail.com' || emailClean === 'mohmmedc@gmail.com' || data.role === 'admin') {
             window.location.replace('/#/admin');
           } else {
             window.location.replace('/#/portal');

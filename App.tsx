@@ -3,6 +3,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { CartProvider } from './src/context/CartContext';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import ServiceDetail from './pages/ServiceDetail';
@@ -21,6 +22,7 @@ import ServiceSubscriptionsAdmin from './pages/ServiceSubscriptionsAdmin';
 import Store from './pages/Store';
 import StoreProductDetail from './pages/StoreProductDetail';
 import StoreAdmin from './pages/StoreAdmin';
+import Policy from './pages/Policy';
 import ServicePackages from './pages/ServicePackages';
 import { supabase } from './src/lib/supabase';
 
@@ -126,53 +128,56 @@ const App: React.FC = () => {
   return (
     <HelmetProvider>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/service/:serviceId" element={<ServiceDetail />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/product/:productId" element={<ProductDetail />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/store" element={<Store />} />
-              <Route path="/store/category/:categorySlug" element={<Store />} />
-              <Route path="/store/products/:productSlug" element={<StoreProductDetail />} />
+        <CartProvider>
+          <Router>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/service/:serviceId" element={<ServiceDetail />} />
+                <Route path="/products" element={<Products />} />
+                <Route path="/product/:productId" element={<ProductDetail />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/policy/:policyId" element={<Policy />} />
+                <Route path="/store" element={<Store />} />
+                <Route path="/store/category/:categorySlug" element={<Store />} />
+                <Route path="/store/products/:productSlug" element={<StoreProductDetail />} />
 
-              {/* Unified Dynamic Project System */}
-              <Route path="/project/:industryId" element={<ProjectIndustrySelector />} />
-              <Route path="/product/:id" element={<ProjectDetail />} />
+                {/* Unified Dynamic Project System */}
+                <Route path="/project/:industryId" element={<ProjectIndustrySelector />} />
+                <Route path="/product/:id" element={<ProjectDetail />} />
 
-              {/* Protected User Route */}
-              <Route path="/portal" element={
-                <ProtectedRoute>
-                  <UserPortal />
+                {/* Protected User Route */}
+                <Route path="/portal" element={
+                  <ProtectedRoute>
+                    <UserPortal />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/login" element={<Login />} />
+                <Route path="/checkout" element={<Checkout />} />
+
+                {/* Dynamic Sub-Service Packages Route */}
+                <Route path="/service/:industryId/:serviceId/packages" element={<ServicePackages />} />
+
+                {/* Fallback route to catch Supabase hash fragments */}
+                <Route path="*" element={<AuthCallbackHandler />} />
+              </Route>
+
+              {/* Protected Admin Routes */}
+              <Route element={
+                <ProtectedRoute requireAdmin={true}>
+                  <AdminLayout />
                 </ProtectedRoute>
-              } />
-
-              <Route path="/login" element={<Login />} />
-              <Route path="/checkout" element={<Checkout />} />
-
-              {/* Dynamic Sub-Service Packages Route */}
-              <Route path="/service/:industryId/:serviceId/packages" element={<ServicePackages />} />
-
-              {/* Fallback route to catch Supabase hash fragments */}
-              <Route path="*" element={<AuthCallbackHandler />} />
-            </Route>
-
-            {/* Protected Admin Routes */}
-            <Route element={
-              <ProtectedRoute requireAdmin={true}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route path="/admin" element={<AdminPortal />} />
-              <Route path="/admin/services/:id/subscriptions" element={<ServiceSubscriptionsAdmin />} />
-              <Route path="/admin/store" element={<StoreAdmin />} />
-            </Route>
-          </Routes>
-        </Router>
+              }>
+                <Route path="/admin" element={<AdminPortal />} />
+                <Route path="/admin/services/:id/subscriptions" element={<ServiceSubscriptionsAdmin />} />
+                <Route path="/admin/store" element={<StoreAdmin />} />
+              </Route>
+            </Routes>
+          </Router>
+        </CartProvider>
       </AuthProvider>
     </HelmetProvider>
   );

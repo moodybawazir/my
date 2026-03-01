@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
 import { ServiceSubscriptions } from '../src/components/subscriptions/ServiceSubscriptions';
+import { useCart } from '../src/context/CartContext';
 
 const IconMap: any = {
     Building2, BrainCircuit, Coffee, Stethoscope, ShoppingCart, Calculator, Printer, 'real-estate': Building2, 'medical': Stethoscope, 'restaurants': Coffee, 'ai-assistant': BrainCircuit, 'ecommerce': ShoppingCart, 'accounting': Calculator, 'printing-crestalnet': Printer
@@ -15,6 +16,7 @@ const IconMap: any = {
 const ServiceDetail: React.FC = () => {
     const { serviceId } = useParams();
     const navigate = useNavigate();
+    const { addItem } = useCart();
     const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -40,14 +42,22 @@ const ServiceDetail: React.FC = () => {
             return;
         }
 
-        sessionStorage.setItem('checkout_item', JSON.stringify({
-            type: 'service',
+        let numericPrice = 0;
+        if (typeof subService.price === 'string') {
+            numericPrice = parseFloat(subService.price.replace(/[^\d.]/g, '')) || 0;
+        } else {
+            numericPrice = subService.price || 0;
+        }
+
+        addItem({
             id: subService.id,
             title: subService.title,
-            price: subService.price,
-            description: subService.description
-        }));
-        navigate('/checkout');
+            price: numericPrice,
+            type: 'service',
+            quantity: 1,
+            description: subService.description,
+            image_url: subService.image_url
+        });
     };
 
     if (loading) {
@@ -184,7 +194,7 @@ const ServiceDetail: React.FC = () => {
                                     onClick={() => handleBuySubService(sub)}
                                     className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
                                 >
-                                    {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
+                                    {sub.has_packages ? 'استعراض الباقات' : 'أضف للسلة'} <ShoppingBag size={20} />
                                 </button>
                             </div>
                         </div>

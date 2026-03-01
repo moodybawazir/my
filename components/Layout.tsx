@@ -2,16 +2,21 @@
 import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
-  Cpu, Menu, X, LogIn, MapPin, Mail, Phone, User as UserIcon
+  Cpu, Menu, X, LogIn, MapPin, Mail, Phone, User as UserIcon, ShoppingBag
 } from 'lucide-react';
 import { useAuth } from '../src/context/AuthContext';
 import { supabase } from '../src/lib/supabase';
+import { useCart } from '../src/context/CartContext';
+import { CartDrawer } from './CartDrawer';
+import { MobileNav } from './MobileNav';
 
 export const Layout: React.FC = () => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { user } = useAuth();
   const [userRole, setUserRole] = React.useState<string | null>(null);
   const location = useLocation();
+  const { items, setIsCartOpen } = useCart();
+  const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const [footerServices, setFooterServices] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     if (user) {
@@ -19,6 +24,12 @@ export const Layout: React.FC = () => {
         if (data) setUserRole(data.role);
       });
     }
+
+    const fetchFooterServices = async () => {
+      const { data } = await supabase.from('industry_sections').select('*').eq('section_type', 'standard');
+      if (data) setFooterServices(data);
+    };
+    fetchFooterServices();
   }, [user]);
 
   const navLinks = [
@@ -52,6 +63,18 @@ export const Layout: React.FC = () => {
             ))}
 
             <div className="flex items-center gap-4 border-r border-white/10 pr-8 mr-2">
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative p-2 text-[#cfd9cc] hover:text-white transition-colors"
+              >
+                <ShoppingBag size={20} />
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#cfd9cc] text-[#0d2226] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in">
+                    {cartItemCount}
+                  </span>
+                )}
+              </button>
+
               {user ? (
                 <Link to={(userRole === 'admin' || user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com') ? '/admin' : '/portal'} className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow flex items-center gap-2">
                   <UserIcon size={18} /> أهلاً بك، {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
@@ -68,35 +91,13 @@ export const Layout: React.FC = () => {
               )}
             </div>
           </div>
-
-          <button className="md:hidden text-[#cfd9cc] p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
         </div>
-
-        {isMenuOpen && (
-          <div className="absolute top-full right-0 w-full glass p-10 md:hidden border-b border-white/10 shadow-2xl animate-in slide-in-from-top duration-300">
-            <div className="flex flex-col gap-8 text-center">
-              {navLinks.map((link) => (
-                <Link key={link.path} to={link.path} onClick={() => setIsMenuOpen(false)} className="text-2xl font-black text-[#cfd9cc] hover:text-white transition-luxury">{link.name}</Link>
-              ))}
-              <hr className="border-white/5" />
-              {user ? (
-                <Link to={(userRole === 'admin' || user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com') ? '/admin' : '/portal'} onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow flex items-center justify-center gap-2">
-                  <UserIcon size={24} /> حسابي
-                </Link>
-              ) : (
-                <>
-                  <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold text-[#cfd9cc]">تسجيل الدخول</Link>
-                  <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow">ابدأ الآن</Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </nav>
 
-      <main className="flex-grow">
+      <CartDrawer />
+      <MobileNav />
+
+      <main className="flex-grow pt-24 pb-20 md:pb-0">
         <Outlet />
       </main>
 
@@ -114,9 +115,11 @@ export const Layout: React.FC = () => {
           <div>
             <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">الخدمات</h4>
             <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
-              <li className="hover:text-white transition-luxury"><Link to="/project/ecommerce">التجارة الإلكترونية</Link></li>
-              <li className="hover:text-white transition-luxury"><Link to="/project/accounting">المحاسبة والمالية</Link></li>
-              <li className="hover:text-white transition-luxury"><Link to="/project/real-estate">العقارات الذكية</Link></li>
+              {footerServices.map((service) => (
+                <li key={service.id} className="hover:text-white transition-luxury">
+                  <Link to={`/project/${service.section_key}`}>{service.title}</Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
@@ -131,15 +134,15 @@ export const Layout: React.FC = () => {
             <div className="space-y-6 text-[#cfd9cc]/60 text-sm font-medium">
               <div className="flex items-center gap-4"><MapPin size={18} className="text-[#cfd9cc]/30" /> مكة المكرمة، المملكة العربية السعودية</div>
               <div className="flex items-center gap-4"><Mail size={18} className="text-[#cfd9cc]/30" /> info@basserahai.com</div>
-              <div className="flex items-center gap-4" dir="ltr"><Phone size={18} className="text-[#cfd9cc]/30" /> 0546281876</div>
+              <div className="flex items-center gap-4"><Phone size={18} className="text-[#cfd9cc]/30" /> <span dir="ltr">0546281876</span></div>
             </div>
           </div>
         </div>
         <div className="max-w-7xl mx-auto pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">© ٢٠٢٤ بصيرة للذكاء الاصطناعي. جميع الحقوق محفوظة.</p>
           <div className="flex gap-8">
-            <a href="#" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">سياسة الخصوصية</a>
-            <a href="#" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">شروط الخدمة</a>
+            <Link to="/policy/privacy" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">سياسة الخصوصية والاستخدام</Link>
+            <Link to="/policy/refund" className="text-[10px] font-black text-white/10 hover:text-[#cfd9cc] transition-luxury">سياسة الاسترجاع</Link>
           </div>
         </div>
       </footer>

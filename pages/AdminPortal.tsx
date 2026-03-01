@@ -6,7 +6,7 @@ import {
   Activity, Package, FileText, Layout as LayoutIcon,
   Save, X, Download, Filter, TrendingUp, AlertCircle,
   ShoppingCart, Layers, Globe, Image as ImageIcon, Power, ChevronRight, LayoutDashboard,
-  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare, Tag, User
+  Cpu, Building2, Gift, ShoppingBag, LogOut, MessageSquare, Tag, User, Shield
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -32,7 +32,9 @@ const AdminPortal: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const [activeMenu, setActiveMenu] = useState<'dashboard' | 'content' | 'customers' | 'invoices' | 'settings' | 'orders' | 'messages'>('dashboard');
-  const [contentTab, setContentTab] = useState<'home' | 'about' | 'services' | 'products' | 'industries'>('home');
+  const [contentTab, setContentTab] = useState<'home' | 'about' | 'services' | 'products' | 'industries' | 'policies'>('home');
+  const [privacyPolicy, setPrivacyPolicy] = useState<string>('');
+  const [refundPolicy, setRefundPolicy] = useState<string>('');
   const [selectedIndustry, setSelectedIndustry] = useState<'real-estate' | 'restaurants' | 'medical' | 'ai-assistant' | 'ecommerce' | 'accounting'>('real-estate');
   const [industrySections, setIndustrySections] = useState<any[]>([]);
   const [industrySubServices, setIndustrySubServices] = useState<any[]>([]);
@@ -111,6 +113,13 @@ const AdminPortal: React.FC = () => {
       // Fetch Settings
       const { data: settingsContent } = await (supabase.from('content_pages') as any).select('content').eq('section_key', 'settings').single();
       if (settingsContent) setSettings(settingsContent.content);
+
+      // Fetch Policies
+      const { data: privacyContent } = await (supabase.from('content_pages') as any).select('content').eq('section_key', 'privacy_policy').single();
+      if (privacyContent) setPrivacyPolicy(privacyContent.content?.text || privacyContent.content || '');
+
+      const { data: refundContent } = await (supabase.from('content_pages') as any).select('content').eq('section_key', 'refund_policy').single();
+      if (refundContent) setRefundPolicy(refundContent.content?.text || refundContent.content || '');
 
       // Fetch Real Orders
       const { data: ordersData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
@@ -289,8 +298,8 @@ const AdminPortal: React.FC = () => {
 
   const handleSaveData = async (key: string, data: any) => {
     let error;
-    if (key === STORAGE_KEYS.HOME || key === STORAGE_KEYS.ABOUT || key === STORAGE_KEYS.SETTINGS) {
-      const sectionKey = key === STORAGE_KEYS.HOME ? 'home' : (key === STORAGE_KEYS.ABOUT ? 'about' : 'settings');
+    if (key === STORAGE_KEYS.HOME || key === STORAGE_KEYS.ABOUT || key === STORAGE_KEYS.SETTINGS || key === 'privacy_policy' || key === 'refund_policy') {
+      const sectionKey = key === STORAGE_KEYS.HOME ? 'home' : (key === STORAGE_KEYS.ABOUT ? 'about' : (key === STORAGE_KEYS.SETTINGS ? 'settings' : key));
       const { error: err } = await (supabase.from('content_pages') as any).upsert({
         section_key: sectionKey,
         content: data,
@@ -725,6 +734,7 @@ const AdminPortal: React.FC = () => {
                   { id: 'about', label: 'من نحن', icon: Globe },
                   { id: 'services', label: 'الخدمات العامة', icon: Layers },
                   { id: 'industries', label: 'إدارة القطاعات (متقدم)', icon: Building2 },
+                  { id: 'policies', label: 'السياسات والشروط', icon: Shield },
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -1268,6 +1278,39 @@ const AdminPortal: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {contentTab === 'policies' && (
+                <div className="space-y-12 animate-in slide-in-from-right duration-700">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">سياسة الخصوصية والاستخدام</label>
+                      <textarea
+                        className="w-full bg-white/5 border border-white/10 rounded-[35px] p-8 text-white text-lg outline-none focus:border-[#cfd9cc]/40 h-[400px] resize-none transition-luxury"
+                        value={privacyPolicy}
+                        onChange={e => setPrivacyPolicy(e.target.value)}
+                        placeholder="أدخل محتوى سياسة الخصوصية (يدعم HTML)"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-[#cfd9cc]/20 uppercase tracking-[0.5em] mr-8">سياسة الاسترجاع</label>
+                      <textarea
+                        className="w-full bg-white/5 border border-white/10 rounded-[35px] p-8 text-white text-lg outline-none focus:border-[#cfd9cc]/40 h-[400px] resize-none transition-luxury"
+                        value={refundPolicy}
+                        onChange={e => setRefundPolicy(e.target.value)}
+                        placeholder="أدخل محتوى سياسة الاسترجاع (يدعم HTML)"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col md:flex-row justify-end gap-4 mt-8 pt-8 border-t border-white/5">
+                    <button onClick={() => handleSaveData('privacy_policy', { title: 'سياسة الخصوصية والاستخدام', text: privacyPolicy })} className="bg-white/10 text-white px-10 py-5 rounded-2xl font-black hover:bg-white/20 transition-luxury text-sm">
+                      حفظ سياسة الخصوصية
+                    </button>
+                    <button onClick={() => handleSaveData('refund_policy', { title: 'سياسة الاسترجاع', text: refundPolicy })} className="bg-white/10 text-white px-10 py-5 rounded-2xl font-black hover:bg-white/20 transition-luxury text-sm">
+                      حفظ سياسة الاسترجاع
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1420,10 +1463,10 @@ const AdminPortal: React.FC = () => {
                               }
                             }}
                             className={`px-4 py-2 rounded-xl text-xs font-black outline-none appearance-none cursor-pointer border ${order.status === 'تم التنفيذ'
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                                : order.status === 'قيد الإنشاء'
-                                  ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                              : order.status === 'قيد الإنشاء'
+                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                               }`}
                           >
                             <option value="قيد الإنشاء" className="bg-[#0d2226] text-white">قيد الإنشاء</option>

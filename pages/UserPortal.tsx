@@ -38,7 +38,7 @@ const UserPortal: React.FC = () => {
       if (subs) setActiveSubscriptions(subs);
 
       // Fetch Orders/Products
-      const { data: ords } = await supabase.from('orders').select('*, order_items(*, products(*))').eq('user_id', user.id);
+      const { data: ords } = await supabase.from('orders').select('*, order_items(*, products(*), services(*))').eq('user_id', user.id);
       if (ords) {
         // Flatten products from orders for the UI
         const flattened = ords.reduce((acc: any[], order: any) => {
@@ -46,7 +46,8 @@ const UserPortal: React.FC = () => {
             id: item.id,
             name: item.title || item.products?.name || item.services?.title || 'منتج / خدمة',
             price: item.price,
-            status: order.status === 'paid' ? 'completed' : 'pending',
+            quantity: item.quantity || 1,
+            status: order.status === 'تم التنفيذ' ? 'completed' : 'pending',
             date: new Date(order.created_at).toLocaleDateString('ar-SA')
           })) || [];
           return [...acc, ...items];
@@ -172,6 +173,7 @@ const UserPortal: React.FC = () => {
                   <thead>
                     <tr className="text-xs text-[#cfd9cc]/30 uppercase tracking-widest border-b border-white/5 font-black">
                       <th className="pb-6">اسم المنتج</th>
+                      <th className="pb-6">الكمية</th>
                       <th className="pb-6">السعر</th>
                       <th className="pb-6">الحالة</th>
                       <th className="pb-6">التاريخ</th>
@@ -181,6 +183,7 @@ const UserPortal: React.FC = () => {
                     {purchasedProducts.map((p) => (
                       <tr key={p.id} className="group hover:bg-white/5 transition-colors">
                         <td className="py-6 text-white font-bold">{p.name}</td>
+                        <td className="py-6 text-white/50">{p.quantity}</td>
                         <td className="py-6 text-white">{p.price} ريال</td>
                         <td className="py-6">
                           <div className={`flex items-center gap-2 ${p.status === 'completed' ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -202,7 +205,12 @@ const UserPortal: React.FC = () => {
             <div className="glass p-10 rounded-[45px] border-white/5 bg-gradient-to-br from-[#1e403a]/20 to-transparent">
               <h3 className="text-xl font-black text-white mb-6">الدعم المباشر</h3>
               <p className="text-[#cfd9cc]/60 text-sm leading-relaxed mb-8">لديك استفسار؟ مدير حسابك المخصص متاح للرد على أي طلبات تقنية فوراً.</p>
-              <button className="w-full py-4 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black hover:bg-white transition-all">تحدث معنا الآن</button>
+              <button
+                onClick={() => navigate('/contact')}
+                className="w-full py-4 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black hover:bg-white transition-all"
+              >
+                تحدث معنا الآن
+              </button>
             </div>
 
             <div className="glass p-10 rounded-[45px] border-white/5">

@@ -5,36 +5,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../src/lib/supabase';
 import SEO from '../src/components/SEO';
 import { useAuth } from '../src/context/AuthContext';
+import { useCart } from '../src/context/CartContext';
 
 const Checkout: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { items, clearCart } = useCart();
 
-    // Try to load from sessionStorage first, then fall back to URL params
-    const storedItem = sessionStorage.getItem('checkout_item');
-    let itemData = null;
+    const isInstant = searchParams.get('instant') === 'true';
 
-    if (storedItem) {
-        itemData = JSON.parse(storedItem);
-        // Clear after reading
-        sessionStorage.removeItem('checkout_item');
-    }
-
-    const itemId = itemData?.id || searchParams.get('id');
-    const itemType = itemData?.type || searchParams.get('type') || 'service';
-    const convertArabicNumerals = (str: string | number) => {
-        return String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
-    };
-
-    const itemName = itemData?.title || searchParams.get('title') || 'خدمة غير محددة';
-    const rawPrice = itemData?.price || searchParams.get('price') || '0';
-
-    // Extract numbers safely
-    const cleanStr = convertArabicNumerals(rawPrice).replace(/[^\d.]/g, '');
-    const itemPrice = cleanStr ? parseFloat(cleanStr) : 0;
-
-    const isInstant = itemData?.instant || searchParams.get('instant') === 'true';
+    // Calculate totals
+    const totalBeforeTax = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const taxAmount = totalBeforeTax * 0.15;
+    const finalTotal = totalBeforeTax + taxAmount;
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(isInstant ? 2 : 1); // 1: Review, 2: Payment, 3: Success
     const [error, setError] = useState<string | null>(null);
@@ -58,7 +42,7 @@ const Checkout: React.FC = () => {
             const { error: orderError } = await supabase.from('orders').insert({
                 id: orderId,
                 user_id: user.id,
-                total_amount: itemPrice,
+                total_amount: finalTotal,
                 status: 'قيد الإنشاء', // Initial status
                 payment_status: 'paid', // Mock paid status
                 ls_order_id: `MOCK-${Date.now().toString().slice(-6)}`,
@@ -66,14 +50,16 @@ const Checkout: React.FC = () => {
 
             if (orderError) throw orderError;
 
-            // Optionally insert into order_items if you want to track line items
-            if (itemId) {
-                await supabase.from('order_items').insert({
+            if (items.length > 0) {
+                const orderItemsToInsert = items.map(item => ({
                     order_id: orderId,
-                    [itemType === 'service' ? 'service_id' : 'product_id']: itemId,
-                    title: itemName,
-                    price: itemPrice
-                });
+                    [item.type === 'product' ? 'product_id' : 'service_id']: item.id,
+                    title: item.title,
+                    price: item.price,
+                }));
+
+                await supabase.from('order_items').insert(orderItemsToInsert);
+                clearCart();
             }
 
             // Simulate network delay for realistic experience
@@ -132,18 +118,23 @@ const Checkout: React.FC = () => {
                         <div className="glass p-6 rounded-3xl sticky top-32">
                             <h3 className="text-xl font-black text-white mb-6 border-b border-white/5 pb-4">ملخص الطلب</h3>
                             <div className="space-y-4 mb-6">
-                                <div className="flex justify-between items-start gap-4">
-                                    <span className="text-[#cfd9cc]/70 font-bold text-sm">{itemName}</span>
-                                    <span className="text-white font-black">{itemPrice} ر.س</span>
-                                </div>
-                                <div className="flex justify-between items-center text-[#cfd9cc]/50 text-xs">
+                                {items.map((item, idx) => (
+                                    <div key={idx} className="flex justify-between items-start gap-4 pb-2 border-b border-white/5 last:border-0">
+                                        <div className="flex flex-col">
+                                            <span className="text-[#cfd9cc]/70 font-bold text-sm">{item.title}</span>
+                                            <span className="text-white/30 text-xs">الكمية: {item.quantity}</span>
+                                        </div>
+                                        <span className="text-white font-black">{item.price * item.quantity} ر.س</span>
+                                    </div>
+                                ))}
+                                <div className="flex justify-between items-center text-[#cfd9cc]/50 text-xs pt-2 border-t border-white/5">
                                     <span>الضريبة (15%)</span>
-                                    <span>{(itemPrice * 0.15).toFixed(2)} ر.س</span>
+                                    <span>{taxAmount.toFixed(2)} ر.س</span>
                                 </div>
                             </div>
                             <div className="border-t border-white/5 pt-4 flex justify-between items-center">
                                 <span className="font-black text-white">الإجمالي</span>
-                                <span className="font-black text-xl text-[#cfd9cc]">{(itemPrice * 1.15).toFixed(2)} ر.س</span>
+                                <span className="font-black text-xl text-[#cfd9cc]">{finalTotal.toFixed(2)} ر.س</span>
                             </div>
                         </div>
                     </div>
@@ -165,8 +156,10 @@ const Checkout: React.FC = () => {
                                             <ShieldCheck className="text-[#cfd9cc]" size={32} />
                                         </div>
                                         <div>
-                                            <h4 className="text-white font-bold text-lg">{itemName}</h4>
-                                            <p className="text-[#cfd9cc]/50 text-sm">ترخيص لمدة سنة • شامل الدعم الفني</p>
+                                            <h4 className="text-white font-bold text-lg">
+                                                {items.length === 1 ? items[0].title : `${items.length} منتجات/خدمات`}
+                                            </h4>
+                                            <p className="text-[#cfd9cc]/50 text-sm">شامل التحديثات والدعم الفني</p>
                                         </div>
                                     </div>
 

@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, ShoppingBag, Sparkles } from 'lucide-react';
 import { supabase } from '../src/lib/supabase';
 import { IndustrySubService } from '../src/lib/industryQueries';
+import { useCart } from '../src/context/CartContext';
 import SEO from '../src/components/SEO';
 
 const ServicePackages: React.FC = () => {
     const { industryId, serviceId } = useParams();
     const navigate = useNavigate();
+    const { addItem } = useCart();
     const [service, setService] = useState<IndustrySubService | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -38,17 +40,21 @@ const ServicePackages: React.FC = () => {
     const handleSelectPackage = (pkg: any) => {
         if (!service) return;
 
-        // Add to session storage for checkout
-        sessionStorage.setItem('checkout_item', JSON.stringify({
-            type: 'service_package',
-            id: pkg.id,
-            parent_id: service.id,
-            title: `${service.title} - ${pkg.name}`,
-            price: pkg.price,
-            description: `باقة (${pkg.name}) شاملة: ${(pkg.features || []).join('، ')}`
-        }));
+        let numericPrice = 0;
+        if (typeof pkg.price === 'string') {
+            numericPrice = parseFloat(pkg.price.replace(/[^\d.]/g, '')) || 0;
+        } else {
+            numericPrice = pkg.price || 0;
+        }
 
-        navigate('/checkout');
+        addItem({
+            id: pkg.id,
+            title: `${service.title} - ${pkg.name}`,
+            price: numericPrice,
+            type: 'service_package',
+            quantity: 1,
+            description: `باقة (${pkg.name}) شاملة: ${(pkg.features || []).join('، ')}`
+        });
     };
 
     if (loading) {
@@ -103,8 +109,8 @@ const ServicePackages: React.FC = () => {
                                 <div
                                     key={pkg.id}
                                     className={`relative flex flex-col rounded-[50px] p-10 transition-all duration-500 overflow-hidden ${isMiddle
-                                            ? 'bg-[#1a383d] border-2 border-[#cfd9cc] shadow-2xl scale-105 z-10'
-                                            : 'bg-white/5 border border-white/5 hover:border-[#cfd9cc]/30 backdrop-blur-sm'
+                                        ? 'bg-[#1a383d] border-2 border-[#cfd9cc] shadow-2xl scale-105 z-10'
+                                        : 'bg-white/5 border border-white/5 hover:border-[#cfd9cc]/30 backdrop-blur-sm'
                                         }`}
                                 >
                                     {isMiddle && (
@@ -132,11 +138,11 @@ const ServicePackages: React.FC = () => {
                                     <button
                                         onClick={() => handleSelectPackage(pkg)}
                                         className={`w-full py-5 rounded-2xl font-black flex items-center justify-center gap-3 transition-all active:scale-95 ${isMiddle
-                                                ? 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white shadow-glow'
-                                                : 'bg-white/10 text-white hover:bg-[#cfd9cc] hover:text-[#0d2226]'
+                                            ? 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white shadow-glow'
+                                            : 'bg-white/10 text-white hover:bg-[#cfd9cc] hover:text-[#0d2226]'
                                             }`}
                                     >
-                                        اختيار الباقة <ShoppingBag size={20} />
+                                        أضف للسلة <ShoppingBag size={20} />
                                     </button>
                                 </div>
                             );

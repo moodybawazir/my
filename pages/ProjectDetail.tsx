@@ -8,6 +8,7 @@ import {
    ChevronRight
 } from 'lucide-react';
 import { supabase } from '../src/lib/supabase';
+import { useCart } from '../src/context/CartContext';
 
 import ThreeDViewer from '../src/components/ThreeDViewer';
 
@@ -23,6 +24,7 @@ const ProjectDetail: React.FC = () => {
    const [loading, setLoading] = useState(true);
    const scrollRef = useRef<HTMLDivElement>(null);
    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+   const { addItem } = useCart();
 
    useEffect(() => {
       const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -89,6 +91,26 @@ const ProjectDetail: React.FC = () => {
       }
    };
 
+   const handleBuyNow = () => {
+      if (!project) return;
+
+      let numericPrice = 0;
+      if (typeof project.price === 'string') {
+         numericPrice = parseFloat(project.price.replace(/[^\d.]/g, '')) || 0;
+      } else {
+         numericPrice = project.price || 0;
+      }
+
+      addItem({
+         id: project.id,
+         title: project.title,
+         price: numericPrice,
+         type: 'project',
+         quantity: 1,
+         image_url: project.images?.[0]
+      });
+   };
+
    const IconComponent = IconMap[project?.icon] || Package;
 
    return (
@@ -140,8 +162,8 @@ const ProjectDetail: React.FC = () => {
                   </div>
 
                   <div className="pt-10 flex flex-col sm:flex-row gap-6">
-                     <button className="flex-1 bg-[#cfd9cc] text-[#0d2226] py-5 md:py-6 rounded-[25px] md:rounded-3xl font-black text-xl md:text-2xl hover:bg-white shadow-glow transition-all flex items-center justify-center gap-4 active:scale-95">
-                        اقتناء الآن <ShoppingCart size={isMobile ? 22 : 28} />
+                     <button onClick={handleBuyNow} className="flex-1 bg-[#cfd9cc] text-[#0d2226] py-5 md:py-6 rounded-[25px] md:rounded-3xl font-black text-xl md:text-2xl hover:bg-white shadow-glow transition-all flex items-center justify-center gap-4 active:scale-95">
+                        أضف للسلة <ShoppingCart size={isMobile ? 22 : 28} />
                      </button>
                      <button className="glass border-white/10 text-white px-10 md:px-12 py-5 md:py-6 rounded-[25px] md:rounded-3xl font-bold text-lg md:text-xl hover:bg-white/5 transition-all active:scale-95">
                         تواصل مع مهندس
