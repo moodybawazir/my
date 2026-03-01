@@ -175,7 +175,7 @@ const Login: React.FC = () => {
                       onChange={(e) => setOtpCode(e.target.value)}
                       className="w-full bg-white/5 border border-white/10 rounded-2xl pr-14 pl-6 py-4 text-white outline-none focus:border-[#cfd9cc]/40 transition-all text-center tracking-[0.5em] font-bold text-xl"
                       placeholder="123456"
-                      maxLength={6}
+                      maxLength={8}
                     />
                   </div>
                 </div>
