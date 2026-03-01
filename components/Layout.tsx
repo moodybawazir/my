@@ -18,6 +18,7 @@ export const Layout: React.FC = () => {
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const [footerServices, setFooterServices] = React.useState<any[]>([]);
   const [footerCategories, setFooterCategories] = React.useState<any[]>([]);
+  const [footerGeneralServices, setFooterGeneralServices] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     if (user) {
@@ -36,6 +37,10 @@ export const Layout: React.FC = () => {
       // Fetch store categories
       const { data: categories } = await supabase.from('store_categories').select('*').limit(6);
       if (categories) setFooterCategories(categories);
+
+      // Fetch general services
+      const { data: generalServices } = await supabase.from('services').select('id, title').order('sort_order').limit(6);
+      if (generalServices) setFooterGeneralServices(generalServices);
     };
     fetchFooterData();
   }, [user]);
@@ -149,6 +154,24 @@ export const Layout: React.FC = () => {
             </ul>
           </div>
 
+          {/* General Services Column */}
+          <div>
+            <h4 className="font-black mb-10 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">الخدمات</h4>
+            <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
+              {footerGeneralServices.length > 0 ? footerGeneralServices.map((svc) => (
+                <li key={svc.id} className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                  <Link to="/services">{svc.title}</Link>
+                  <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+                </li>
+              )) : (
+                <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                  <Link to="/services">جميع الخدمات</Link>
+                  <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+                </li>
+              )}
+            </ul>
+          </div>
+
           {/* Store & Products Column */}
           <div>
             <h4 className="font-black mb-10 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">المتجر الرقمي</h4>
@@ -217,6 +240,13 @@ export const Layout: React.FC = () => {
                   <p className="opacity-60 text-[11px]">info@basserahai.com</p>
                 </div>
                 <Mail size={16} className="text-[#cfd9cc]/30" />
+              </div>
+              <div className="flex items-start justify-end gap-4">
+                <div className="text-right">
+                  <p className="text-white font-black text-xs mb-1 text-[10px]">الهاتف</p>
+                  <p className="opacity-60 text-[11px]" dir="ltr">+966 54 628 1876</p>
+                </div>
+                <Phone size={16} className="text-[#cfd9cc]/30" />
               </div>
             </div>
           </div>

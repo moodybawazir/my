@@ -59,7 +59,7 @@ serve(async (req) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: 'Baseerah AI <onboarding@resend.dev>',
+                from: 'Baseerah AI <support@basserahai.com>',
                 to: email,
                 subject: 'رمز التحقق الخاص بك لـ Baseerah AI',
                 html: `
