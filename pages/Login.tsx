@@ -41,9 +41,14 @@ const Login: React.FC = () => {
           body: { email, fullName, phone }
         });
 
-        if (regError || data?.error) {
-          throw new Error(regError?.message || data?.error || 'فشل تسجيل الحساب.');
+        if (regError) {
+          throw new Error(regError?.message || 'فشل الاتصال بالخادم (Registration).');
         }
+
+        if (data?.success === false || data?.error) {
+          throw new Error(data?.error || 'فشل تسجيل الحساب.');
+        }
+
 
         setShowSuccess(true);
         setTimeout(() => {
@@ -63,9 +68,14 @@ const Login: React.FC = () => {
           body: { email }
         });
 
-        if (error || data?.error) {
-          throw new Error(error?.message || data?.error || 'حدث خطأ أثناء إرسال الرمز.');
+        if (error) {
+          throw new Error(error?.message || 'فشل الاتصال بالخادم (OTP).');
         }
+
+        if (data?.success === false || data?.error) {
+          throw new Error(data?.error || 'حدث خطأ أثناء إرسال الرمز.');
+        }
+
 
         setShowOtpInput(true);
         return;
@@ -82,9 +92,14 @@ const Login: React.FC = () => {
           body: verifyBody
         });
 
-        if (error || data?.error) {
-          throw new Error(error?.message || data?.error || 'رمز التحقق غير صحيح.');
+        if (error) {
+          throw new Error(error?.message || 'فشل الاتصال بالخادم (Verify).');
         }
+
+        if (data?.success === false || data?.error) {
+          throw new Error(data?.error || 'رمز التحقق غير صحيح.');
+        }
+
 
         if (data?.api_session_key) {
           const { error: signInError } = await supabase.auth.signInWithPassword({

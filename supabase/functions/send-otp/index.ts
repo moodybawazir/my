@@ -46,8 +46,11 @@ serve(async (req) => {
         // Send email using Resend API
         const resendApiKey = Deno.env.get('RESEND_API_KEY');
         if (!resendApiKey) {
-            throw new Error('RESEND_API_KEY is not configured');
+            console.error('RESEND_API_KEY is missing');
+            throw new Error('فشل إرسال البريد: مفتاح API غير متوفر');
         }
+
+        console.log(`Attempting to send OTP to ${email}...`);
 
         const resendResponse = await fetch('https://api.resend.com/emails', {
             method: 'POST',
@@ -56,35 +59,53 @@ serve(async (req) => {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: 'Baseerah AI <onboarding@resend.dev>', // Should use a verified domain in production if possible.
+                from: 'Baseerah AI <onboarding@resend.dev>',
                 to: email,
                 subject: 'رمز التحقق الخاص بك لـ Baseerah AI',
                 html: `
-          <div dir="rtl" style="font-family: sans-serif; text-align: center; padding: 20px;">
-            <h1 style="color: #0d2226;">تسجيل الدخول - Baseerah AI</h1>
-            <p>رمز التحقق الخاص بك هو:</p>
-            <h2 style="font-size: 36px; letter-spacing: 5px; color: #1e403a; background: #f0f0f0; padding: 15px; border-radius: 10px; display: inline-block;">${otpCode}</h2>
-            <p style="color: #666; font-size: 14px;">صالح لمدة 15 دقيقة.</p>
+          <div dir="rtl" style="font-family: sans-serif; text-align: center; padding: 20px; color: #0d2226;">
+            <h1 style="color: #1e403a;">تسجيل الدخول - Baseerah AI</h1>
+            <p style="font-size: 16px;">مرحباً، رمز التحقق الخاص بك هو:</p>
+            <div style="margin: 30px 0;">
+              <span style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1e403a; background: #f0f7f4; padding: 15px 30px; border-radius: 12px; border: 2px solid #e0ede7; display: inline-block;">${otpCode}</span>
+            </div>
+            <p style="color: #666; font-size: 14px;">هذا الرمز صالح لمدة 15 دقيقة فقط.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">إذا لم تطلب هذا الرمز، يرجى تجاهل هذا البريد.</p>
           </div>
         `
             })
         });
 
+        const resendData = await resendResponse.json();
+
         if (!resendResponse.ok) {
-            const errorData = await resendResponse.json();
-            console.error('Resend Error:', errorData);
-            throw new Error('فشل في إرسال البريد الإلكتروني. يرجى التأكد من صحة البريد.');
+            console.error('Resend API Error:', resendData);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'فشل إرسال البريد الإلكتروني. يرجى التأكد من البريد والمحاولة لاحقاً',
+                details: resendData
+            }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 200, // Handle as success in terms of transport but error in logic
+            })
         }
 
-        return new Response(JSON.stringify({ success: true }), {
+        console.log('OTP sent successfully via Resend:', resendData.id);
+
+        return new Response(JSON.stringify({ success: true, message: 'تم إرسال الرمز بنجاح' }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200,
         })
 
     } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('send-otp internal error:', error);
+        return new Response(JSON.stringify({
+            success: false,
+            error: error.message || 'حدث خطأ غير متوقع أثناء إرسال الرمز'
+        }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+            status: 200,
         })
     }
 })
