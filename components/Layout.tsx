@@ -17,6 +17,7 @@ export const Layout: React.FC = () => {
   const { items, setIsCartOpen } = useCart();
   const cartItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
   const [footerServices, setFooterServices] = React.useState<any[]>([]);
+  const [footerCategories, setFooterCategories] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     if (user) {
@@ -25,11 +26,16 @@ export const Layout: React.FC = () => {
       });
     }
 
-    const fetchFooterServices = async () => {
-      const { data } = await supabase.from('industry_sections').select('*').eq('section_type', 'standard');
-      if (data) setFooterServices(data);
+    const fetchFooterData = async () => {
+      // Fetch services
+      const { data: services } = await supabase.from('industry_sections').select('*').eq('section_type', 'standard').limit(6);
+      if (services) setFooterServices(services);
+
+      // Fetch store categories
+      const { data: categories } = await supabase.from('store_categories').select('*').limit(6);
+      if (categories) setFooterCategories(categories);
     };
-    fetchFooterServices();
+    fetchFooterData();
   }, [user]);
 
   const navLinks = [
@@ -102,39 +108,105 @@ export const Layout: React.FC = () => {
       </main>
 
       <footer className="bg-[#0a1b1e] border-t border-white/5 pt-24 pb-12 px-6 mt-auto">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-20 text-right">
-          <div>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-10 mb-20 text-right">
+          {/* Logo & About Column */}
+          <div className="space-y-8 lg:col-span-1">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white/5 rounded-2xl p-2.5 backdrop-blur-xl border border-white/10 shadow-glow">
                 <img src="/logo.png" alt="Baseerah AI" className="w-full h-full object-contain" />
               </div>
-              <span className="text-2xl font-black text-white tracking-tighter">Baseerah AI</span>
+              <div>
+                <span className="text-2xl font-black text-white tracking-tighter block leading-none">Baseerah AI</span>
+                <span className="text-[9px] font-black text-[#cfd9cc]/30 uppercase tracking-[0.4em] mt-1 block">بصيرة للذكاء الاصطناعي</span>
+              </div>
             </div>
-            <p className="text-[#cfd9cc]/50 leading-relaxed font-light mb-8">رائدة أتمتة الأعمال في المملكة العربية السعودية عبر حلول الذكاء الاصطناعي السيادي.</p>
+            <p className="text-[#cfd9cc]/40 leading-relaxed font-light text-sm max-w-[280px]">
+              رائدة أتمتة الأعمال في المملكة العربية السعودية عبر حلول الذكاء الاصطناعي السيادي والفائق.
+            </p>
           </div>
+
+          {/* Services Column */}
           <div>
-            <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">الخدمات</h4>
+            <h4 className="font-black mb-10 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">أتمتة الأعمال</h4>
             <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
               {footerServices.map((service) => (
-                <li key={service.id} className="hover:text-white transition-luxury">
+                <li key={service.id} className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
                   <Link to={`/project/${service.section_key}`}>{service.title}</Link>
+                  <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
                 </li>
               ))}
             </ul>
           </div>
+
+          {/* Store & Products Column */}
           <div>
-            <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">روابط سريعة</h4>
+            <h4 className="font-black mb-10 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">المتجر الرقمي</h4>
             <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
-              <li className="hover:text-white transition-luxury"><Link to="/store">المتجر الرقمي</Link></li>
-              <li className="hover:text-white transition-luxury"><Link to="/contact">تواصل معنا</Link></li>
+              {footerCategories.length > 0 ? footerCategories.map((cat) => (
+                <li key={cat.id} className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                  <Link to={`/store/category/${cat.slug}`}>{cat.name}</Link>
+                  <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+                </li>
+              )) : (
+                <>
+                  <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                    <Link to="/store">قوالب الأعمال</Link>
+                    <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+                  </li>
+                  <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                    <Link to="/store">أنظمة AI جاهزة</Link>
+                    <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+                  </li>
+                  <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                    <Link to="/store">تطبيقات سحابية</Link>
+                    <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+                  </li>
+                </>
+              )}
             </ul>
           </div>
+
+          {/* Company Column */}
           <div>
-            <h4 className="font-black mb-8 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">التواصل الاستراتيجي</h4>
-            <div className="space-y-6 text-[#cfd9cc]/60 text-sm font-medium">
-              <div className="flex items-center gap-4"><MapPin size={18} className="text-[#cfd9cc]/30" /> مكة المكرمة، المملكة العربية السعودية</div>
-              <div className="flex items-center gap-4"><Mail size={18} className="text-[#cfd9cc]/30" /> info@basserahai.com</div>
-              <div className="flex items-center gap-4"><Phone size={18} className="text-[#cfd9cc]/30" /> <span dir="ltr">0546281876</span></div>
+            <h4 className="font-black mb-10 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">الشركة</h4>
+            <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
+              <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                <Link to="/about">من نحن</Link>
+                <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+              </li>
+              <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                <Link to="/contact">تواصل معنا</Link>
+                <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+              </li>
+              <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                <Link to="/policy/privacy">سياسة الخصوصية</Link>
+                <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+              </li>
+              <li className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
+                <Link to="/policy/refund">سياسة الاسترجاع</Link>
+                <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact Column */}
+          <div>
+            <h4 className="font-black mb-10 text-white uppercase text-[10px] tracking-[0.4em] opacity-40">اتصل بنا</h4>
+            <div className="space-y-8 text-[#cfd9cc]/60 text-sm font-medium">
+              <div className="flex items-start justify-end gap-4">
+                <div className="text-right">
+                  <p className="text-white font-black text-xs mb-1 text-[10px]">مكة المكرمة</p>
+                  <p className="opacity-60 text-[11px]">المملكة العربية السعودية</p>
+                </div>
+                <MapPin size={16} className="text-[#cfd9cc]/30" />
+              </div>
+              <div className="flex items-start justify-end gap-4">
+                <div className="text-right">
+                  <p className="text-white font-black text-xs mb-1 text-[10px]">البريد الإلكتروني</p>
+                  <p className="opacity-60 text-[11px]">info@basserahai.com</p>
+                </div>
+                <Mail size={16} className="text-[#cfd9cc]/30" />
+              </div>
             </div>
           </div>
         </div>

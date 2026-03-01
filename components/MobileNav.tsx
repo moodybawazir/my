@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Grid, ShoppingBag, User } from 'lucide-react';
+import { Home, Grid, ShoppingBag, ShoppingCart, User } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../src/context/CartContext';
 import { useAuth } from '../src/context/AuthContext';
@@ -29,9 +29,10 @@ export const MobileNav: React.FC = () => {
     const navItems = [
         { name: 'الرئيسية', path: '/', icon: Home },
         { name: 'الخدمات', path: '/services', icon: Grid },
+        { name: 'المتجر', path: '/store', icon: ShoppingBag },
         {
             name: 'السلة',
-            icon: ShoppingBag,
+            icon: ShoppingCart,
             action: () => setIsCartOpen(true),
             badge: cartItemCount
         },
