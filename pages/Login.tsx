@@ -13,6 +13,7 @@ const Login: React.FC = () => {
   const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
 
   // Form States
@@ -26,67 +27,82 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      if (!showOtpInput) {
-        // --- SEND CUSTOM OTP via Resend ---
-        // For both Login and Signup phase 1
-        if (!isLogin && step === 1) {
+      // 1. REGISTRATION FLOW (No OTP req for signup)
+      if (!isLogin && !showOtpInput) {
+        if (step === 1) {
           setStep(2);
           setLoading(false);
           return;
         }
 
+        // --- FINAL REGISTRATION STEP ---
+        console.log('Registering user:', email);
+        const randomPassword = Math.random().toString(36).slice(-12) + "A1!";
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password: randomPassword,
+          options: {
+            data: { full_name: fullName, phone: phone, role: 'user' }
+          }
+        });
+
+        if (signUpError) {
+          if (signUpError.message.includes('already registered')) {
+            throw new Error('هذا البريد مسجل مسبقاً. يرجى تسجيل الدخول.');
+          }
+          throw signUpError;
+        }
+
+        setShowSuccess(true);
+        setTimeout(() => {
+          setIsLogin(true);
+          setShowSuccess(false);
+          setStep(1);
+          setEmail(email);
+          setShowOtpInput(false);
+        }, 4000);
+        return;
+      }
+
+      // 2. LOGIN FLOW - Step 1: Send OTP
+      if (isLogin && !showOtpInput) {
         console.log('Sending OTP to:', email);
         const { data, error } = await supabase.functions.invoke('send-otp', {
           body: { email }
         });
-        console.log('Send OTP Response:', { data, error });
 
-        if (error) {
-          console.error(error);
-          throw new Error('حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة لاحقاً.');
-        }
-
-        if (data?.error) {
-          throw new Error(data.error);
+        if (error || data?.error) {
+          throw new Error(error?.message || data?.error || 'حدث خطأ أثناء إرسال الرمز.');
         }
 
         setShowOtpInput(true);
-      } else {
-        // --- VERIFY CUSTOM OTP & CREATE SILENT API SESSION ---
+        return;
+      }
+
+      // 3. VERIFICATION FLOW (Login verification)
+      if (showOtpInput) {
         const verifyBody = isLogin
           ? { email, code: otpCode }
-          : { email, code: otpCode, fullName, phone };
+          : { email, code: otpCode, fullName, phone }; // Fallback for legacy
 
         console.log('Verifying OTP for:', email);
         const { data, error } = await supabase.functions.invoke('verify-otp', {
           body: verifyBody
         });
-        console.log('Verify OTP Response:', { data, error });
 
-        if (error) {
-          console.error(error);
-          throw new Error('حدث خطأ أثناء التحقق من الرمز.');
-        }
-
-        if (data?.error) {
-          throw new Error(data.error);
+        if (error || data?.error) {
+          throw new Error(error?.message || data?.error || 'رمز التحقق غير صحيح.');
         }
 
         if (data?.api_session_key) {
-          // This silently logs the user in creating the Supabase Auth Session
-          // strictly for Data Store (RLS) usage, without triggering ANY emails whatsoever.
           const { error: signInError } = await supabase.auth.signInWithPassword({
             email: email,
             password: data.api_session_key
           });
 
-          if (signInError) {
-            console.error(signInError);
-            throw new Error('فشل إنشاء جلسة البيانات. يرجى المحاولة مجدداً.');
-          }
+          if (signInError) throw new Error('فشل إنشاء الجلسة.');
 
           const emailClean = email.trim().toLowerCase();
-
           if (emailClean === 'odood48@gmail.com' || emailClean === 'mohmmedc@gmail.com' || data.role === 'admin') {
             window.location.replace('/#/admin');
           } else {
@@ -258,7 +274,7 @@ const Login: React.FC = () => {
                   disabled={loading}
                   className="flex-1 py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black text-xl hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50"
                 >
-                  {loading ? 'جاري الإرسال...' : 'إرسال رمز التحقق'} <ArrowLeft size={20} />
+                  {loading ? 'جاري الحفظ...' : 'إنشاء الحساب'} <CheckCircle2 size={20} />
                 </button>
               </div>
               <button
@@ -269,6 +285,19 @@ const Login: React.FC = () => {
                 البدء من جديد
               </button>
             </form>
+          </div>
+        )}
+
+        {showSuccess && (
+          <div className="absolute inset-0 bg-[#0d2226] flex flex-col items-center justify-center text-center p-10 z-50 rounded-[60px] animate-in fade-in zoom-in duration-300">
+            <div className="w-24 h-24 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
+              <CheckCircle2 size={48} className="text-emerald-500" />
+            </div>
+            <h2 className="text-3xl font-black text-white mb-4">شكراً لتسجيلك!</h2>
+            <p className="text-[#cfd9cc]/60 mb-8 max-w-sm">
+              تم إنشاء حسابك بنجاح. سنقوم الآن بتوجيهك لصفحة تسجيل الدخول لتوثيق دخولك ولبدء استخدام المنصة.
+            </p>
+            <div className="w-12 h-1 border-t-4 border-emerald-500 rounded-full animate-pulse" />
           </div>
         )}
       </div>
