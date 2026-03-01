@@ -121,8 +121,8 @@ const AdminPortal: React.FC = () => {
       const { data: refundContent } = await (supabase.from('content_pages') as any).select('content').eq('section_key', 'refund_policy').single();
       if (refundContent) setRefundPolicy(refundContent.content?.text || refundContent.content || '');
 
-      // Fetch Real Orders
-      const { data: ordersData } = await supabase.from('orders').select('*').order('created_at', { ascending: false });
+      // Fetch Real Orders with Items
+      const { data: ordersData } = await supabase.from('orders').select('*, order_items(*, products(*), services(*))').order('created_at', { ascending: false });
       if (ordersData) setOrders(ordersData);
 
       // Fetch Messages
@@ -1422,6 +1422,7 @@ const AdminPortal: React.FC = () => {
                   <tr className="bg-white/5 text-[10px] font-black text-[#cfd9cc]/30 uppercase tracking-[0.3em] border-b border-white/5">
                     <th className="p-10">رقم الطلب</th>
                     <th className="p-10">العميل</th>
+                    <th className="p-10">العناصر</th>
                     <th className="p-10">المبلغ</th>
                     <th className="p-10">الحالة</th>
                     <th className="p-10">التاريخ</th>
@@ -1443,37 +1444,43 @@ const AdminPortal: React.FC = () => {
                         <td className="p-10">
                           <div className="text-white font-bold">{order.user_id?.slice(0, 8)}...</div>
                         </td>
+                        <td className="p-10">
+                          <div className="space-y-2">
+                            {order.order_items?.map((item: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <div className="w-8 h-8 rounded-lg bg-[#cfd9cc]/10 flex items-center justify-center text-[#cfd9cc]">
+                                  <ShoppingBag size={14} />
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-white text-[11px] font-black">{item.products?.name || item.services?.title || 'منتج / خدمة'}</div>
+                                  <div className="text-[#cfd9cc]/40 text-[9px] font-bold">{item.price} ر.س</div>
+                                </div>
+                              </div>
+                            ))}
+                            {(!order.order_items || order.order_items.length === 0) && (
+                              <span className="text-white/20 text-xs italic">لا توجد عناصر</span>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-10 text-xl font-black text-white">{order.total_amount} ر.س</td>
                         <td className="p-10">
-                          <select
-                            value={order.status || 'قيد الإنشاء'}
-                            onChange={async (e) => {
-                              const newStatus = e.target.value;
-
-                              // Update local state
-                              setOrders(orders.map(o => o.id === order.id ? { ...o, status: newStatus } : o));
-
-                              // Update database
-                              const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', order.id);
-
-                              if (!error && newStatus === 'تم التنفيذ') {
-                                alert('تم إرسال بريد إلكتروني للعميل بنجاح');
-                              } else if (error) {
-                                alert('حدث خطأ أثناء تحديث حالة الطلب');
-                              }
-                            }}
-                            className={`px-4 py-2 rounded-xl text-xs font-black outline-none appearance-none cursor-pointer border ${order.status === 'تم التنفيذ'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                              : order.status === 'قيد الإنشاء'
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                              }`}
-                          >
-                            <option value="قيد الإنشاء" className="bg-[#0d2226] text-white">قيد الإنشاء</option>
-                            <option value="جاري المعالجة" className="bg-[#0d2226] text-white">جاري المعالجة</option>
-                            <option value="تم التنفيذ" className="bg-[#0d2226] text-white">تم التنفيذ</option>
-                            <option value="ملغي" className="bg-[#0d2226] text-white">ملغي</option>
-                          </select>
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value={order.status || 'قيد الإنشاء'}
+                              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-xs font-bold outline-none focus:border-[#cfd9cc]/40 appearance-none"
+                              onChange={async (e) => {
+                                const newStatus = e.target.value;
+                                const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', order.id);
+                                if (!error) {
+                                  setOrders(orders.map((o: any) => o.id === order.id ? { ...o, status: newStatus } : o));
+                                }
+                              }}
+                            >
+                              <option className="bg-[#0d2226]" value="pending">قيد الانتظار</option>
+                              <option className="bg-[#0d2226]" value="completed">تم التنفيذ</option>
+                              <option className="bg-[#0d2226]" value="cancelled">ملغي</option>
+                            </select>
+                          </div>
                         </td>
                         <td className="p-10 text-sm text-[#cfd9cc]/40">{new Date(order.created_at).toLocaleDateString('ar-SA')}</td>
                         <td className="p-10 text-left">
@@ -1492,77 +1499,79 @@ const AdminPortal: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div >
         )}
 
-        {activeMenu === 'messages' && (
-          <div className="space-y-12 animate-in fade-in duration-700">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div>
-                <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">رسائل التواصل</h2>
-                <p className="text-[#cfd9cc]/40 mt-4 font-medium text-lg">طلبات الاستشارة والاستفسارات الواردة من الموقع.</p>
-              </div>
-            </header>
+        {
+          activeMenu === 'messages' && (
+            <div className="space-y-12 animate-in fade-in duration-700">
+              <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                  <h2 className="text-4xl md:text-6xl font-black text-white tracking-tight">رسائل التواصل</h2>
+                  <p className="text-[#cfd9cc]/40 mt-4 font-medium text-lg">طلبات الاستشارة والاستفسارات الواردة من الموقع.</p>
+                </div>
+              </header>
 
-            <div className="glass rounded-[55px] border-white/5 overflow-x-auto shadow-2xl">
-              <table className="w-full text-right border-collapse min-w-[1000px]">
-                <thead>
-                  <tr className="bg-white/5 text-[10px] font-black text-[#cfd9cc]/30 uppercase tracking-[0.3em] border-b border-white/5">
-                    <th className="p-10">المرسل</th>
-                    <th className="p-10">الرسالة</th>
-                    <th className="p-10">البيانات الإضافية</th>
-                    <th className="p-10">التاريخ</th>
-                    <th className="p-10 text-left">إجراءات</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {messages.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="p-10 text-center text-white/20 font-bold">لا توجد رسائل حتى الآن</td>
+              <div className="glass rounded-[55px] border-white/5 overflow-x-auto shadow-2xl">
+                <table className="w-full text-right border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-white/5 text-[10px] font-black text-[#cfd9cc]/30 uppercase tracking-[0.3em] border-b border-white/5">
+                      <th className="p-10">المرسل</th>
+                      <th className="p-10">الرسالة</th>
+                      <th className="p-10">البيانات الإضافية</th>
+                      <th className="p-10">التاريخ</th>
+                      <th className="p-10 text-left">إجراءات</th>
                     </tr>
-                  ) : (
-                    messages.map((msg: any) => (
-                      <tr key={msg.id} className="group hover:bg-white/[0.02] transition-luxury text-right">
-                        <td className="p-10">
-                          <div className="font-black text-white text-xl">{msg.sender_name}</div>
-                          <div className="text-sm text-[#cfd9cc]/30 mt-1">{msg.email}</div>
-                        </td>
-                        <td className="p-10">
-                          <p className="text-[#cfd9cc] text-sm leading-relaxed max-w-md line-clamp-3">{msg.message}</p>
-                        </td>
-                        <td className="p-10">
-                          <div className="space-y-1 text-xs">
-                            {msg.payload?.phone && <div className="text-emerald-400 font-bold" dir="ltr">{msg.payload.phone}</div>}
-                            {msg.payload?.company && <div className="text-[#cfd9cc]/40">{msg.payload.company}</div>}
-                            {msg.payload?.industry && <div className="text-[#cfd9cc]/40">{msg.payload.industry} | {msg.payload.budget}</div>}
-                          </div>
-                        </td>
-                        <td className="p-10 text-sm text-[#cfd9cc]/40">{new Date(msg.created_at).toLocaleDateString('ar-SA')}</td>
-                        <td className="p-10 text-left">
-                          <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-luxury">
-                            <button
-                              onClick={async () => {
-                                if (confirm('هل تريد حذف هذه الرسالة؟')) {
-                                  const { error } = await supabase.from('messages').delete().eq('id', msg.id);
-                                  if (!error) setMessages(prev => prev.filter(m => m.id !== msg.id));
-                                }
-                              }}
-                              className="p-4 bg-red-500/10 rounded-2xl text-red-400 hover:bg-red-500 hover:text-white transition-luxury"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {messages.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="p-10 text-center text-white/20 font-bold">لا توجد رسائل حتى الآن</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      messages.map((msg: any) => (
+                        <tr key={msg.id} className="group hover:bg-white/[0.02] transition-luxury text-right">
+                          <td className="p-10">
+                            <div className="font-black text-white text-xl">{msg.sender_name}</div>
+                            <div className="text-sm text-[#cfd9cc]/30 mt-1">{msg.email}</div>
+                          </td>
+                          <td className="p-10">
+                            <p className="text-[#cfd9cc] text-sm leading-relaxed max-w-md line-clamp-3">{msg.message}</p>
+                          </td>
+                          <td className="p-10">
+                            <div className="space-y-1 text-xs">
+                              {msg.payload?.phone && <div className="text-emerald-400 font-bold" dir="ltr">{msg.payload.phone}</div>}
+                              {msg.payload?.company && <div className="text-[#cfd9cc]/40">{msg.payload.company}</div>}
+                              {msg.payload?.industry && <div className="text-[#cfd9cc]/40">{msg.payload.industry} | {msg.payload.budget}</div>}
+                            </div>
+                          </td>
+                          <td className="p-10 text-sm text-[#cfd9cc]/40">{new Date(msg.created_at).toLocaleDateString('ar-SA')}</td>
+                          <td className="p-10 text-left">
+                            <div className="flex justify-end gap-4 opacity-0 group-hover:opacity-100 transition-luxury">
+                              <button
+                                onClick={async () => {
+                                  if (confirm('هل تريد حذف هذه الرسالة؟')) {
+                                    const { error } = await supabase.from('messages').delete().eq('id', msg.id);
+                                    if (!error) setMessages(prev => prev.filter(m => m.id !== msg.id));
+                                  }
+                                }}
+                                className="p-4 bg-red-500/10 rounded-2xl text-red-400 hover:bg-red-500 hover:text-white transition-luxury"
+                              >
+                                <Trash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }
 
-      </main>
+      </main >
 
       {/* --- CRUD MODAL (Enhanced Design) --- */}
       {
