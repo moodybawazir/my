@@ -42,12 +42,20 @@ export const Layout: React.FC = () => {
             ))}
 
             <div className="flex items-center gap-4 border-r border-white/10 pr-8 mr-2">
-              <Link to="/login" className="text-sm font-bold text-[#cfd9cc] hover:text-white flex items-center gap-2 transition-luxury">
-                <LogIn size={18} /> دخول
-              </Link>
-              <Link to="/contact" className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow">
-                ابدأ الآن
-              </Link>
+              {user ? (
+                <Link to={user.user_metadata?.role === 'admin' ? '/admin' : '/portal'} className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow flex items-center gap-2">
+                  <UserIcon size={18} /> أهلاً بك، {user.user_metadata?.full_name?.split(' ')[0] || user.email?.split('@')[0]}
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" className="text-sm font-bold text-[#cfd9cc] hover:text-white flex items-center gap-2 transition-luxury">
+                    <LogIn size={18} /> دخول
+                  </Link>
+                  <Link to="/contact" className="bg-[#cfd9cc] text-[#0d2226] px-6 py-2.5 rounded-full text-sm font-black hover:bg-white transition-luxury shadow-glow">
+                    ابدأ الآن
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -63,8 +71,16 @@ export const Layout: React.FC = () => {
                 <Link key={link.path} to={link.path} onClick={() => setIsMenuOpen(false)} className="text-2xl font-black text-[#cfd9cc] hover:text-white transition-luxury">{link.name}</Link>
               ))}
               <hr className="border-white/5" />
-              <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold text-[#cfd9cc]">تسجيل الدخول</Link>
-              <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow">ابدأ الآن</Link>
+              {user ? (
+                <Link to={user.user_metadata?.role === 'admin' ? '/admin' : '/portal'} onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow flex items-center justify-center gap-2">
+                  <UserIcon size={24} /> حسابي
+                </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-xl font-bold text-[#cfd9cc]">تسجيل الدخول</Link>
+                  <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="bg-[#cfd9cc] text-[#0d2226] py-5 rounded-2xl font-black text-xl shadow-glow">ابدأ الآن</Link>
+                </>
+              )}
             </div>
           </div>
         )}

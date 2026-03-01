@@ -81,8 +81,12 @@ const Login: React.FC = () => {
             throw new Error('فشل إنشاء جلسة البيانات. يرجى المحاولة مجدداً.');
           }
 
-          // Successfully established Native API Session quietly, redirect!
-          window.location.replace('/#/portal');
+          const { data: userData } = await supabase.from('users').select('role').eq('id', (await supabase.auth.getUser()).data.user?.id).single();
+          if (userData?.role === 'admin') {
+            window.location.replace('/#/admin');
+          } else {
+            window.location.replace('/#/portal');
+          }
         }
       }
     } catch (err: any) {
