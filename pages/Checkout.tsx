@@ -23,13 +23,16 @@ const Checkout: React.FC = () => {
 
     const itemId = itemData?.id || searchParams.get('id');
     const itemType = itemData?.type || searchParams.get('type') || 'service';
-    const convertArabicNumerals = (str: string) => {
-        return str.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
+    const convertArabicNumerals = (str: string | number) => {
+        return String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString());
     };
 
     const itemName = itemData?.title || searchParams.get('title') || 'خدمة غير محددة';
     const rawPrice = itemData?.price || searchParams.get('price') || '0';
-    const itemPrice = parseFloat(convertArabicNumerals(rawPrice).replace(/[^\d.]/g, ''));
+
+    // Extract numbers safely
+    const cleanStr = convertArabicNumerals(rawPrice).replace(/[^\d.]/g, '');
+    const itemPrice = cleanStr ? parseFloat(cleanStr) : 0;
 
     const isInstant = itemData?.instant || searchParams.get('instant') === 'true';
     const [loading, setLoading] = useState(false);

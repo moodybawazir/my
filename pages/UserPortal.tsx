@@ -44,7 +44,7 @@ const UserPortal: React.FC = () => {
         const flattened = ords.reduce((acc: any[], order: any) => {
           const items = order.order_items?.map((item: any) => ({
             id: item.id,
-            name: item.products?.name || 'منتج غير معروف',
+            name: item.title || item.products?.name || item.services?.title || 'منتج / خدمة',
             price: item.price,
             status: order.status === 'paid' ? 'completed' : 'pending',
             date: new Date(order.created_at).toLocaleDateString('ar-SA')
