@@ -396,7 +396,7 @@ const AdminPortal: React.FC = () => {
   const handleModalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget as HTMLFormElement);
-    const data = Object.fromEntries(fd.entries());
+    const data = Object.fromEntries(fd as any);
 
     // Convert comma-separated features to array
     const featuresArray = (data.features as string)?.split(',').map(f => f.trim()).filter(f => f !== '') || [];

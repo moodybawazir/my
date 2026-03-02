@@ -100,7 +100,11 @@ const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.Re
 
   React.useEffect(() => {
     if (requireAdmin && user) {
-      if (user.email === 'odood48@gmail.com' || user.email === 'mohmmedc@gmail.com') {
+      if (
+        user.email === 'odood48@gmail.com' ||
+        user.email === 'mohmmedc@gmail.com' ||
+        user.email?.toLowerCase() === 'fathi1419@gmail.com'
+      ) {
         setIsAdmin(true);
       } else {
         supabase.from('users').select('role').eq('id', user.id).single().then(({ data }) => {
