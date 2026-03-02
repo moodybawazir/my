@@ -55,6 +55,7 @@ const AdminPortal: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'customer' | 'product' | 'service'>('customer');
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const { uploadImage } = useStorage();
 
@@ -135,6 +136,10 @@ const AdminPortal: React.FC = () => {
       // Fetch Messages
       const { data: messagesData } = await supabase.from('messages').select('*').order('created_at', { ascending: false });
       if (messagesData) setMessages(messagesData || []);
+
+      // Fetch Subscriptions
+      const { data: subsData } = await supabase.from('subscriptions').select('*');
+      if (subsData) setSubscriptions(subsData);
     };
 
     fetchData();
@@ -639,7 +644,8 @@ const AdminPortal: React.FC = () => {
                 <thead>
                   <tr className="bg-white/5 text-[10px] font-black text-[#cfd9cc]/30 uppercase tracking-[0.3em] border-b border-white/5">
                     <th className="p-10">العميل</th>
-                    <th className="p-10">الحالة</th>
+                    <th className="p-10">الاشتراك</th>
+                    <th className="p-10">الرصيد</th>
                     <th className="p-10">المستحقات</th>
                     <th className="p-10">الخدمة المجانية</th>
                     <th className="p-10">تاريخ التسجيل</th>
@@ -654,9 +660,20 @@ const AdminPortal: React.FC = () => {
                         <div className="text-sm text-[#cfd9cc]/30 mt-1">{c.email}</div>
                       </td>
                       <td className="p-10">
-                        <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase ${c.status === 'active' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/10' : 'bg-red-500/10 text-red-400 border border-red-500/10'}`}>
-                          {c.status === 'active' ? 'نشط' : 'معطل'}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const sub = subscriptions.find(s => s.user_id === c.id);
+                            if (!sub) return <span className="text-white/20 text-xs">لا يوجد اشتراك</span>;
+
+                            const daysLeft = Math.max(0, Math.ceil((new Date(sub.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
+                            return (
+                              <>
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                                <span className="font-black text-white">{sub.plan_name} ({daysLeft} يوم)</span>
+                              </>
+                            );
+                          })()}
+                        </div>
                       </td>
                       <td className="p-10">
                         <div className="text-2xl font-black text-white">{c.balance} <span className="text-xs text-[#cfd9cc]/40">ر.س</span></div>
