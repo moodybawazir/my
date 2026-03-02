@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import SEO from '../src/components/SEO';
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
+import { useCart } from '../src/context/CartContext';
 
 const IconMap: any = {
     Building2, Layout, Zap, Shield, Globe, Cpu
@@ -14,6 +15,7 @@ const IconMap: any = {
 
 const ProjectDynamicFallback: React.FC = () => {
     const { industryId } = useParams<{ industryId: string }>();
+    const { addItem } = useCart();
     const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -38,13 +40,12 @@ const ProjectDynamicFallback: React.FC = () => {
             return;
         }
 
-        sessionStorage.setItem('checkout_item', JSON.stringify({
-            type: 'service',
+        addItem({
             id: subService.id,
+            type: 'service',
             title: subService.title,
-            price: subService.price,
-            description: subService.description
-        }));
+            price: subService.price || 0,
+        });
         window.location.hash = '#/checkout';
     };
 

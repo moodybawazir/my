@@ -32,15 +32,21 @@ export const Layout: React.FC = () => {
     const fetchFooterData = async () => {
       // Fetch services
       const { data: services } = await supabase.from('industry_sections').select('*').eq('section_type', 'standard').limit(6);
-      if (services) setFooterServices(services);
+      if (services) {
+        setFooterServices(services.filter(s => s.title && s.title.trim() !== ''));
+      }
 
       // Fetch store categories
       const { data: categories } = await supabase.from('store_categories').select('*').limit(6);
-      if (categories) setFooterCategories(categories);
+      if (categories) {
+        setFooterCategories(categories.filter(c => c.name && c.name.trim() !== ''));
+      }
 
       // Fetch general services
       const { data: generalServices } = await supabase.from('services').select('id, title').order('sort_order').limit(6);
-      if (generalServices) setFooterGeneralServices(generalServices);
+      if (generalServices) {
+        setFooterGeneralServices(generalServices.filter(s => s.title && s.title.trim() !== ''));
+      }
     };
     fetchFooterData();
   }, [user]);

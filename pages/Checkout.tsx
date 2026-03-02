@@ -15,10 +15,10 @@ const Checkout: React.FC = () => {
 
     const isInstant = searchParams.get('instant') === 'true';
 
-    // Calculate totals
+    // Calculate totals - Tax inclusive
     const totalBeforeTax = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const taxAmount = totalBeforeTax * 0.15;
-    const finalTotal = totalBeforeTax + taxAmount;
+    const taxAmount = 0; // Tax is now inclusive
+    const finalTotal = totalBeforeTax;
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(isInstant ? 2 : 1); // 1: Review, 2: Payment, 3: Success
     const [error, setError] = useState<string | null>(null);
@@ -68,12 +68,9 @@ const Checkout: React.FC = () => {
 
             clearCart();
             setLoading(false);
-            setStep(3);
 
-            // Navigate away after showing thank you page
-            setTimeout(() => {
-                navigate('/portal');
-            }, 10000);
+            // Navigate directly to success page
+            navigate('/checkout/success');
 
         } catch (err: any) {
             setError(err.message || 'حدث خطأ أثناء إتمام الطلب');
@@ -85,10 +82,7 @@ const Checkout: React.FC = () => {
     React.useEffect(() => {
         const status = searchParams.get('status');
         if (status === 'success') {
-            setStep(3);
-            setTimeout(() => {
-                navigate('/portal');
-            }, 5000);
+            navigate('/checkout/success');
         }
     }, [searchParams]);
 
@@ -129,13 +123,9 @@ const Checkout: React.FC = () => {
                                         <span className="text-white font-black">{item.price * item.quantity} ر.س</span>
                                     </div>
                                 ))}
-                                <div className="flex justify-between items-center text-[#cfd9cc]/50 text-xs pt-2 border-t border-white/5">
-                                    <span>الضريبة (15%)</span>
-                                    <span>{taxAmount.toFixed(2)} ر.س</span>
-                                </div>
                             </div>
                             <div className="border-t border-white/5 pt-4 flex justify-between items-center">
-                                <span className="font-black text-white">الإجمالي</span>
+                                <span className="font-black text-white">الإجمالي <span className="text-white/30 text-xs mr-2 font-normal">(شامل الضريبة)</span></span>
                                 <span className="font-black text-xl text-[#cfd9cc]">{finalTotal.toFixed(2)} ر.س</span>
                             </div>
                         </div>

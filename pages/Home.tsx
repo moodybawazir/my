@@ -72,7 +72,7 @@ const Home: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       const homeContent = await fetchPageContent('home');
-      const servicesData = await fetchGeneralServices(3);
+      const servicesData = await fetchGeneralServices(6);
 
       if (homeContent) setCmsData({
         ...cmsData,
@@ -121,11 +121,11 @@ const Home: React.FC = () => {
 
       {/* Hero Section */}
       <section className="relative pt-48 md:pt-64 pb-24 px-6 text-center z-10">
-        <div className="inline-flex items-center gap-2 mb-10 glass-dark border border-white/10 px-6 py-2 rounded-full text-[#cfd9cc] text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md animate-in fade-in slide-in-from-bottom-4">
-          <Sparkles size={14} className="text-[#cfd9cc]" /> أتمتة المستقبل تبدأ هنا
-        </div>
-
         <div className="relative inline-block">
+          <div className="inline-flex items-center gap-2 mb-6 glass-dark border border-white/10 px-6 py-2 rounded-full text-[#cfd9cc] text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 relative -top-6">
+            <Sparkles size={14} className="text-[#cfd9cc]" /> أتمتة المستقبل تبدأ هنا
+          </div>
+
           <h1 className="font-black text-white mb-12 tracking-tighter drop-shadow-2xl animate-in fade-in duration-1000">
             {renderHeroTitle()}
           </h1>
@@ -153,12 +153,11 @@ const Home: React.FC = () => {
       {/* Services Grid (Luxury Modern) */}
       <section className="py-24 md:py-32 px-6 z-10 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24 gap-6">
-            <div className="text-right">
-              <h2 className="text-[10px] font-black text-[#cfd9cc] uppercase tracking-[0.6em] mb-4 opacity-40 text-center md:text-right">محفظة الأتمتة</h2>
-              <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight text-center md:text-right">أتمتة بلا حدود.</h3>
+          <div className="flex flex-col md:flex-row justify-center items-center mb-16 md:mb-24 gap-6">
+            <div className="text-center">
+              <h2 className="text-[10px] font-black text-[#cfd9cc] uppercase tracking-[0.6em] mb-4 opacity-40">محفظة الأتمتة</h2>
+              <h3 className="text-4xl md:text-6xl font-black text-white tracking-tight">أتمتة بلا حدود.</h3>
             </div>
-            <Link to="/services" className="text-[#cfd9cc] font-black border-b border-[#cfd9cc]/30 pb-1 hover:border-[#cfd9cc] transition-luxury text-sm">شاهد كافة القطاعات</Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
@@ -193,7 +192,7 @@ const Home: React.FC = () => {
                 {getIcon(stat.icon)}
               </div>
               <div className="text-3xl md:text-5xl font-black text-white mb-2">{stat.val}</div>
-              <div className="text-[9px] font-black text-[#cfd9cc]/20 uppercase tracking-widest">{stat.label}</div>
+              <div className="text-sm font-bold text-[#cfd9cc] opacity-80 uppercase tracking-widest">{stat.label}</div>
             </div>
           ))}
 

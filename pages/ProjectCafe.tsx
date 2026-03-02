@@ -6,11 +6,28 @@ import SEO from '../src/components/SEO';
 import { motion } from 'framer-motion';
 import { fetchIndustryContent, IndustrySection, IndustrySubService, LoyaltyProgram } from '../src/lib/industryQueries';
 import LoyaltyCard from '../src/components/LoyaltyCard';
+import { useCart } from '../src/context/CartContext';
 
 const ProjectCafe: React.FC = () => {
   const { industryId } = useParams<{ industryId: string }>();
+  const { addItem } = useCart();
   const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[], loyalty: LoyaltyProgram | null } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleBuySubService = (subService: IndustrySubService) => {
+    if (subService.has_packages) {
+      window.location.hash = `#/service/${industryId || 'restaurants'}/${subService.id}/packages`;
+      return;
+    }
+
+    addItem({
+      id: subService.id,
+      type: 'service',
+      title: subService.title,
+      price: subService.price || 0,
+    });
+    window.location.hash = '#/checkout';
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -128,8 +145,11 @@ const ProjectCafe: React.FC = () => {
                   ))}
                 </div>
 
-                <button className="w-full py-5 rounded-2xl bg-[#cfd9cc] text-[#0d2226] font-black hover:bg-white transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95">
-                  طلب الخدمة الآن <ShoppingBag size={20} />
+                <button
+                  onClick={() => handleBuySubService(sub)}
+                  className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
+                >
+                  {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
                 </button>
               </div>
             </div>

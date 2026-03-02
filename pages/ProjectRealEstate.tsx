@@ -5,9 +5,11 @@ import { Camera, Plus, Sparkles, Building2, ShoppingBag, CheckCircle2 } from 'lu
 import SEO from '../src/components/SEO';
 import ThreeDViewer from '../src/components/ThreeDViewer';
 import { fetchIndustryContent, fetchIndustryDemo, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
+import { useCart } from '../src/context/CartContext';
 
 const ProjectRealEstate: React.FC = () => {
    const { industryId } = useParams<{ industryId: string }>();
+   const { addItem } = useCart();
    const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
    const [villaData, setVillaData] = useState<any>(null);
    const [loading, setLoading] = useState(true);
@@ -37,13 +39,12 @@ const ProjectRealEstate: React.FC = () => {
          return;
       }
 
-      sessionStorage.setItem('checkout_item', JSON.stringify({
-         type: 'service',
+      addItem({
          id: subService.id,
+         type: 'service',
          title: subService.title,
-         price: subService.price,
-         description: subService.description
-      }));
+         price: subService.price || 0,
+      });
       window.location.hash = '#/checkout';
    };
 

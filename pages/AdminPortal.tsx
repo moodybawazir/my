@@ -138,7 +138,7 @@ const AdminPortal: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [isAuthorized]);
 
   // Fetch industry data when industry content tab or selected industry changes
   useEffect(() => {
@@ -983,20 +983,13 @@ const AdminPortal: React.FC = () => {
               {contentTab === 'industries' && (
                 <div className="space-y-16 animate-in slide-in-from-right duration-700">
                   <div className="flex flex-wrap gap-4 p-2 bg-black/20 rounded-3xl border border-white/5">
-                    {[
-                      { id: 'real-estate', label: 'العقارات' },
-                      { id: 'restaurants', label: 'المطاعم والكافيهات' },
-                      { id: 'medical', label: 'المنظومة الطبية' },
-                      { id: 'ai-assistant', label: 'الذكاء الاصطناعي' },
-                      { id: 'ecommerce', label: 'التجارة الإلكترونية' },
-                      { id: 'accounting', label: 'أتمتة الأعمال' }
-                    ].map(ind => (
+                    {services.map(ind => (
                       <button
                         key={ind.id}
-                        onClick={() => setSelectedIndustry(ind.id as any)}
-                        className={`px-8 py-3 rounded-2xl text-sm font-black transition-all ${selectedIndustry === ind.id ? 'bg-[#cfd9cc] text-[#0d2226] shadow-glow' : 'text-white/40 hover:bg-white/5'}`}
+                        onClick={() => setSelectedIndustry(ind.category || ind.id)}
+                        className={`px-8 py-3 rounded-2xl text-sm font-black transition-all ${selectedIndustry === (ind.category || ind.id) ? 'bg-[#cfd9cc] text-[#0d2226] shadow-glow' : 'text-white/40 hover:bg-white/5'}`}
                       >
-                        {ind.label}
+                        {ind.title}
                       </button>
                     ))}
                   </div>

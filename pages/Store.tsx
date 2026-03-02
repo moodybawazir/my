@@ -17,6 +17,7 @@ export default function Store() {
     const [activeCategory, setActiveCategory] = useState<StoreCategory | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [sortOrder, setSortOrder] = useState<'newest' | 'price-asc' | 'price-desc'>('newest');
 
     useEffect(() => {
         const loadData = async () => {
@@ -52,11 +53,19 @@ export default function Store() {
         loadData();
     }, [categorySlug, navigate]);
 
-    // Filter products locally by search query
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    // Filter products locally by search query and sort them
+    const filteredProducts = products
+        .filter(p =>
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+        .sort((a, b) => {
+            const priceA = a.sale_price || a.price;
+            const priceB = b.sale_price || b.price;
+            if (sortOrder === 'price-asc') return priceA - priceB;
+            if (sortOrder === 'price-desc') return priceB - priceA;
+            return 0; // 'newest' keeps original fetch order which should be descending by created_at by default
+        });
 
     const pageTitle = activeCategory ? `${activeCategory.name} | متجر بصيرة الرقمي` : 'المتجر الرقمي | بصيرة AI';
 
@@ -135,9 +144,18 @@ export default function Store() {
                             <p className="font-bold text-[#cfd9cc]/60">
                                 عرض <span className="text-white mx-1">{filteredProducts.length}</span> منتج
                             </p>
-                            <button className="flex items-center gap-2 text-sm font-bold text-white/50 hover:text-white transition-colors">
-                                <Filter size={18} /> ترتيب حسب
-                            </button>
+                            <div className="relative flex items-center text-sm font-bold text-white/50 hover:text-white transition-colors">
+                                <Filter size={18} className="ml-2" />
+                                <select
+                                    className="appearance-none bg-transparent cursor-pointer outline-none font-bold"
+                                    value={sortOrder}
+                                    onChange={(e) => setSortOrder(e.target.value as any)}
+                                >
+                                    <option value="newest" className="bg-[#0d2226] text-white">الأحدث</option>
+                                    <option value="price-asc" className="bg-[#0d2226] text-white">السعر: من الأقل للأعلى</option>
+                                    <option value="price-desc" className="bg-[#0d2226] text-white">السعر: من الأعلى للأقل</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* Results Grid */}

@@ -15,6 +15,7 @@ import ProjectIndustrySelector from './pages/ProjectIndustrySelector';
 import ProjectDetail from './pages/ProjectDetail';
 import Login from './pages/Login';
 import Checkout from './pages/Checkout';
+import CheckoutSuccess from './pages/CheckoutSuccess';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import { Layout, AdminLayout } from './components/Layout';
@@ -162,6 +163,7 @@ const App: React.FC = () => {
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/checkout/success" element={<CheckoutSuccess />} />
 
                 {/* Dynamic Sub-Service Packages Route */}
                 <Route path="/service/:industryId/:serviceId/packages" element={<ServicePackages />} />
