@@ -11,9 +11,29 @@ const Contact: React.FC = () => {
     email: '',
     phone: '',
     company: '',
-    industry: 'عقارات',
+    industry: 'تجارة إلكترونية',
     message: ''
   });
+  const [settings, setSettings] = React.useState<any>({
+    officialEmail: 'info@basserahai.com',
+    officialPhone: '0546281876',
+    officialAddress: ' مكة المكرمة\nالمملكة العربية السعودية'
+  });
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      const { data }: any = await supabase
+        .from('content_pages' as any)
+        .select('content')
+        .eq('section_key', 'settings')
+        .single();
+
+      if (data?.content) {
+        setSettings(data.content);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   const nextStep = () => setStep(prev => prev + 1);
   const prevStep = () => setStep(prev => prev - 1);
@@ -37,7 +57,13 @@ ${formData.message}
       sender_name: formData.name,
       email: formData.email,
       message: fullMessage,
-      category: 'contact'
+      category: 'contact',
+      payload: {
+        phone: formData.phone,
+        company: formData.company,
+        industry: formData.industry,
+        submitted_at: new Date().toISOString()
+      }
     });
 
     if (error) {
@@ -81,7 +107,7 @@ ${formData.message}
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mb-2">البريد الإلكتروني</h4>
-                    <p className="text-white font-bold text-lg">info@basserahai.com</p>
+                    <p className="text-white font-bold text-lg">{settings.officialEmail}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-6 group">
@@ -90,7 +116,7 @@ ${formData.message}
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mb-2">الخط المباشر</h4>
-                    <p className="text-white font-bold text-lg" dir="ltr">0546281876</p>
+                    <p className="text-white font-bold text-lg" dir="ltr">{settings.officialPhone}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-6 group">
@@ -99,7 +125,7 @@ ${formData.message}
                   </div>
                   <div>
                     <h4 className="text-xs font-black text-[#cfd9cc]/40 uppercase tracking-widest mb-2">المقر الرئيسي</h4>
-                    <p className="text-white font-bold text-lg leading-relaxed">حي التقنية، مكة المكرمة<br />المملكة العربية السعودية</p>
+                    <p className="text-white font-bold text-lg leading-relaxed whitespace-pre-line">{settings.officialAddress}</p>
                   </div>
                 </div>
               </div>

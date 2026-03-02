@@ -105,7 +105,7 @@ export const CartDrawer: React.FC = () => {
                 </div>
 
                 {items.length > 0 && (
-                    <div className="p-6 border-t border-white/10 bg-black/20">
+                    <div className="p-6 pb-28 md:pb-6 border-t border-white/10 bg-black/20">
                         <div className="flex justify-between items-center mb-6">
                             <span className="text-white/60">الإجمالي المبدئي</span>
                             <span className="text-2xl font-black text-white">{totalPrice.toLocaleString()} <span className="text-sm text-[#cfd9cc]">ر.س</span></span>

@@ -103,10 +103,10 @@ const Home: React.FC = () => {
     const restOfTitle = words.slice(1).join(' ');
 
     return (
-      <>
+      <div className="flex flex-col items-center">
         <span className="text-4xl md:text-6xl lg:text-7xl block mb-2 opacity-80">{firstWord}</span>
-        <span className="text-6xl md:text-8xl lg:text-[110px] leading-[0.9]">{restOfTitle}</span>
-      </>
+        <span className="text-6xl md:text-8xl lg:text-[110px] leading-[0.9] text-center w-full">{restOfTitle}</span>
+      </div>
     );
   };
 
@@ -136,7 +136,7 @@ const Home: React.FC = () => {
           )}
         </div>
 
-        <p className="text-lg md:text-2xl text-[#cfd9cc]/60 mb-16 max-w-3xl mx-auto font-light leading-relaxed animate-in fade-in duration-1000 delay-300 px-4">
+        <p className="text-lg md:text-2xl text-[#cfd9cc] mb-16 max-w-3xl mx-auto font-medium leading-relaxed animate-in fade-in duration-1000 delay-300 px-4">
           {cmsData.heroSubtitle}
         </p>
 
@@ -162,13 +162,13 @@ const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
             {services.map((p, i) => (
-              <div key={p.id} className="glass p-10 rounded-[45px] border-white/5 card-hover transition-luxury group relative overflow-hidden backdrop-blur-md">
+              <div key={p.id} className="glass p-10 rounded-[45px] border-white/5 card-hover transition-luxury group relative overflow-hidden backdrop-blur-md flex flex-col items-center text-center">
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-[#cfd9cc]/5 blur-3xl -z-10 group-hover:bg-[#cfd9cc]/15 transition-luxury" />
                 <div className="w-20 h-20 bg-[#1e403a] rounded-2xl flex items-center justify-center mb-10 border border-[#cfd9cc]/10 shadow-xl group-hover:scale-110 transition-luxury">
                   <div className="text-[#cfd9cc]">{getIcon(p.icon)}</div>
                 </div>
-                <h4 className="text-2xl font-black text-white mb-5 group-hover:text-[#cfd9cc] transition-luxury">{p.title}</h4>
-                <p className="text-[#cfd9cc]/40 text-base leading-relaxed mb-10 font-light">{p.desc}</p>
+                <h4 className="text-2xl md:text-3xl font-black text-white mb-5 group-hover:text-[#cfd9cc] transition-luxury">{p.title}</h4>
+                <p className="text-[#cfd9cc]/70 text-lg md:text-xl leading-relaxed mb-10 font-medium">{p.desc}</p>
                 <Link to={`/service/${p.category || p.id}`} className="inline-flex items-center gap-3 text-[#cfd9cc] font-black text-sm group-hover:gap-6 transition-luxury">
                   مشاهدة الحل <ArrowLeft size={18} />
                 </Link>
@@ -187,12 +187,12 @@ const Home: React.FC = () => {
             { label: 'دقة البيانات', icon: 'Cloud', val: '٩٩.٩٪' },
             { label: 'ترابط الأنظمة', icon: 'Network', val: 'آمن' }
           ]).map((stat: any, i: number) => (
-            <div key={i} className="glass p-8 md:p-12 rounded-[40px] border-white/5 flex flex-col items-center text-center group hover:bg-[#cfd9cc]/5 transition-luxury">
-              <div className="text-[#cfd9cc] mb-5 group-hover:scale-125 transition-luxury">
-                {getIcon(stat.icon)}
+            <div key={i} className="glass p-8 md:p-12 rounded-[40px] border-white/10 flex flex-col items-center text-center group hover:bg-[#cfd9cc]/5 transition-luxury backdrop-blur-xl">
+              <div className="text-[#cfd9cc] mb-8 group-hover:scale-125 transition-luxury transform-gpu">
+                {React.cloneElement(getIcon(stat.icon) as React.ReactElement, { size: 48 })}
               </div>
-              <div className="text-3xl md:text-5xl font-black text-white mb-2">{stat.val}</div>
-              <div className="text-sm font-bold text-[#cfd9cc] opacity-80 uppercase tracking-widest">{stat.label}</div>
+              <div className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tighter shadow-sm">{stat.val}</div>
+              <div className="text-lg md:text-xl font-black text-[#cfd9cc] uppercase tracking-[0.2em]">{stat.label}</div>
             </div>
           ))}
 

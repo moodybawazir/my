@@ -53,7 +53,11 @@ const ServicePackages: React.FC = () => {
             price: numericPrice,
             type: 'service_package',
             quantity: 1,
-            description: `باقة (${pkg.name}) شاملة: ${(pkg.features || []).join('، ')}`
+            description: `باقة (${pkg.name}) شاملة: ${(pkg.features || []).join('، ')}`,
+            metadata: {
+                billing_cycle: pkg.billing_cycle,
+                billing_days: pkg.billing_days
+            }
         });
     };
 
@@ -121,7 +125,14 @@ const ServicePackages: React.FC = () => {
 
                                     <h3 className="text-3xl font-black text-white mb-2 mt-4 text-center">{pkg.name}</h3>
                                     <div className="text-center mb-8 border-b border-white/10 pb-8">
-                                        <div className="text-4xl font-black text-[#cfd9cc]">{pkg.price}</div>
+                                        <div className="text-4xl font-black text-[#cfd9cc]">
+                                            {pkg.price}
+                                            <span className="text-sm text-white/40 mr-2 font-black italic">
+                                                / {pkg.billing_cycle === 'monthly' ? 'شهرياً' :
+                                                    pkg.billing_cycle === 'yearly' ? 'سنوياً' :
+                                                        `${pkg.billing_days} يوم`}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="space-y-4 mb-12 flex-grow">

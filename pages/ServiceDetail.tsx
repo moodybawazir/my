@@ -105,8 +105,8 @@ const ServiceDetail: React.FC = () => {
                                 <Sparkles size={14} className="text-[#cfd9cc]" />
                                 <span className="text-xs font-black text-[#cfd9cc] uppercase tracking-widest">{hero?.subtitle || "خدمة متكاملة"}</span>
                             </div>
-                            <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">{hero?.title}</h1>
-                            <p className="text-xl md:text-2xl text-[#cfd9cc]/60 leading-relaxed font-light">{hero?.description}</p>
+                            <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">{hero?.title || content.serviceModel?.title}</h1>
+                            <p className="text-xl md:text-2xl text-[#cfd9cc]/60 leading-relaxed font-light">{hero?.description || content.serviceModel?.desc}</p>
                         </div>
                         <div className={`w-32 h-32 md:w-48 md:h-48 rounded-[50px] md:rounded-[70px] bg-[#cfd9cc] flex items-center justify-center text-[#0d2226] shadow-2xl shrink-0 group hover:scale-105 transition-transform duration-500`}>
                             <IconComponent size={window.innerWidth < 768 ? 64 : 96} />

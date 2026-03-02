@@ -51,7 +51,7 @@ const Checkout: React.FC = () => {
 
             if (orderError) throw orderError;
 
-            // Insert order items
+            // Insert order items and handle subscriptions
             if (items.length > 0) {
                 const orderItemsToInsert = items.map(item => ({
                     order_id: orderId,
@@ -61,8 +61,33 @@ const Checkout: React.FC = () => {
                 }));
 
                 const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
-                if (itemsError) {
-                    console.error('Error inserting order items:', itemsError);
+                if (itemsError) throw itemsError;
+
+                // Handle Subscriptions for packages
+                for (const item of items) {
+                    if (item.type === 'service_package' && item.metadata) {
+                        const { billing_cycle, billing_days } = item.metadata;
+                        let durationDays = 30;
+                        if (billing_cycle === 'monthly') durationDays = 30;
+                        else if (billing_cycle === 'yearly') durationDays = 365;
+                        else if (billing_cycle === 'custom_days') durationDays = parseInt(billing_days) || 30;
+
+                        const startDate = new Date();
+                        const endDate = new Date();
+                        endDate.setDate(endDate.getDate() + durationDays);
+
+                        const { error: subError } = await supabase.from('subscriptions').insert({
+                            user_id: user.id,
+                            plan_name: item.title,
+                            price: item.price,
+                            status: 'active',
+                            start_date: startDate.toISOString(),
+                            end_date: endDate.toISOString(),
+                            created_at: new Date().toISOString()
+                        });
+
+                        if (subError) console.error('Error creating subscription:', subError);
+                    }
                 }
             }
 
