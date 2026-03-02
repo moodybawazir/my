@@ -1294,11 +1294,6 @@ const AdminPortal: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                </div>
-                </div>
-                </div>
-                </div>
-                </div>
               )}
 
               {contentTab === 'policies' && (
