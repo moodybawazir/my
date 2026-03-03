@@ -69,7 +69,19 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
             is_active: pkg.is_active
         }).eq('id', pkg.id);
 
-        // Update/Insert Durations
+        // Update/Insert/Delete Durations
+        // Ensure any previously existing durations not in pkg.durations are removed, or just handled.
+        // For simplicity, we only Update/Insert handled durations. If they disabled trial, we should probably delete it.
+        // Let's delete removed durations:
+        const { data: existingDurations } = await supabase.from('package_durations').select('id').eq('package_id', pkg.id);
+        const currentDurationIds = pkg.durations.filter((d: any) => !d.id.startsWith('temp_')).map((d: any) => d.id);
+        if (existingDurations) {
+            const toDelete = existingDurations.filter(ed => !currentDurationIds.includes(ed.id));
+            for (const d of toDelete) {
+                await supabase.from('package_durations').delete().eq('id', d.id);
+            }
+        }
+
         for (const duration of pkg.durations) {
             if (duration.id.startsWith('temp_')) {
                 const { id, ...rest } = duration;
@@ -169,7 +181,7 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
             newDurations.push({
                 id: 'temp_' + type + '_' + Date.now(),
                 duration_type: type,
-                months: type === 'monthly' ? 1 : type === 'quarterly' ? 3 : type === 'semi_annual' ? 6 : 12,
+                months: type === 'monthly' ? 1 : type === 'quarterly' ? 3 : type === 'semi_annual' ? 6 : type === 'annual' ? 12 : 0,
                 is_active: true,
                 ...updates
             });
@@ -221,7 +233,26 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
                             <div className="flex justify-between items-end">
                                 <label className="text-xs font-bold text-[#cfd9cc]">الأسعار حسب المدة</label>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div className="space-y-1">
+                                    <span className="text-[10px] text-white/40">تجربة مجانية (7 أيام)</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const hasTrial = pkg.durations?.some((d: any) => d.duration_type === 'trial');
+                                            if (hasTrial) {
+                                                // If it has temp_, just filter it out. If it's saved, we might want to delete it or set is_active false. 
+                                                // Simple filter for now, updatePackageState will handle updates
+                                                updatePackageState(pkg.id, { durations: pkg.durations.filter((d: any) => d.duration_type !== 'trial') });
+                                            } else {
+                                                updateDuration(pkg.id, 'trial', { price: 0, discount_percentage: 0 });
+                                            }
+                                        }}
+                                        className={`w-full text-xs py-2 rounded-lg border transition-all ${pkg.durations?.some((d: any) => d.duration_type === 'trial') ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-bold' : 'bg-black/40 text-white/50 border-white/10'}`}
+                                    >
+                                        {pkg.durations?.some((d: any) => d.duration_type === 'trial') ? 'مفعلة' : 'تفعيل التجربة'}
+                                    </button>
+                                </div>
                                 <div className="space-y-1">
                                     <span className="text-[10px] text-white/40">شهري</span>
                                     <input

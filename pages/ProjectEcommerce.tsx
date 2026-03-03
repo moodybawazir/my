@@ -1,13 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ShoppingCart, TrendingUp, Globe, CreditCard, CheckCircle2 } from 'lucide-react';
+import { ShoppingCart, TrendingUp, Globe, CreditCard, CheckCircle2, ShoppingBag } from 'lucide-react';
 import SEO from '../src/components/SEO';
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
+import { useCart } from '../src/context/CartContext';
 
 const ProjectEcommerce: React.FC = () => {
   const { industryId } = useParams<{ industryId: string }>();
+  const { addItem } = useCart();
   const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleBuySubService = (subService: IndustrySubService) => {
+    if (subService.has_packages) {
+      window.location.hash = `#/service/${industryId || 'ecommerce'}/${subService.id}/packages`;
+      return;
+    }
+
+    addItem({
+      id: subService.id,
+      type: 'service',
+      title: subService.title,
+      price: subService.price || 0,
+    });
+    window.location.hash = '#/checkout';
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -49,54 +66,140 @@ const ProjectEcommerce: React.FC = () => {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
-          {content.services.map((sub, i) => (
-            <div key={i} className="glass p-10 rounded-[40px] border-white/5 group hover:border-[#cfd9cc]/20 transition-all flex flex-col items-center">
-              <div className="w-16 h-16 bg-[#1e403a] rounded-[22px] flex items-center justify-center mb-8 border border-white/5 overflow-hidden">
-                {sub.image_url ? (
-                  <img src={sub.image_url} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  <span className="text-[#cfd9cc] text-2xl font-black">{i + 1}</span>
-                )}
-              </div>
-              <h3 className="text-2xl font-bold mb-4">{sub.title}</h3>
-              <p className="text-white/60 mb-6 font-light">{sub.description}</p>
-              <div className="text-xl font-black text-[#cfd9cc] mb-8">{sub.price}</div>
-              <div className="w-full space-y-3 mt-auto">
-                {(sub.features || []).map((f: string, idx: number) => (
-                  <div key={idx} className="flex items-center justify-center gap-2 text-xs text-white/40">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+        {/* 3. SECTIONS NAVIGATION & SERVICES */}
+        {(() => {
+          const serviceSections = content.sections.filter(s => s.section_type !== 'hero' && s.section_type !== 'interactive_demo');
+          const unlinkedServices = content.services.filter(s => !s.section_id);
 
-          {/* Fallback Features if no services */}
-          {content.services.length === 0 && (
+          return (
             <>
-              <div className="glass p-8 rounded-3xl">
-                <Globe size={48} className="mx-auto mb-6 text-blue-400" />
-                <h3 className="text-2xl font-bold mb-4">دعم عالمي</h3>
-                <p className="text-white/60">تعدد اللغات والعملات تلقائياً حسب موقع العميل.</p>
-              </div>
-              <div className="glass p-8 rounded-3xl">
-                <CreditCard size={48} className="mx-auto mb-6 text-emerald-400" />
-                <h3 className="text-2xl font-bold mb-4">بوابات دفع</h3>
-                <p className="text-white/60">ربط مباشر مع Stripe, PayPal, Mada, و Apple Pay.</p>
-              </div>
-              <div className="glass p-8 rounded-3xl">
-                <TrendingUp size={48} className="mx-auto mb-6 text-purple-400" />
-                <h3 className="text-2xl font-bold mb-4">نمو التسويق</h3>
-                <p className="text-white/60">أدوات SEO و Pixel مدمجة لحملات إعلانية ناجحة.</p>
-              </div>
+              {/* Filter / Nav Pills */}
+              {serviceSections.length > 0 && (
+                <div className="flex flex-wrap gap-4 mb-20 justify-center">
+                  {serviceSections.map((sec: IndustrySection) => {
+                    const hasServices = content.services.some(s => s.section_id === sec.id);
+                    if (!hasServices) return null; // Hide tabs for empty sections
+
+                    return (
+                      <button
+                        key={sec.id}
+                        onClick={() => document.getElementById(`section-${sec.id}`)?.scrollIntoView({ behavior: 'smooth' })}
+                        className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-[#cfd9cc] font-black hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-all"
+                      >
+                        {sec.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Grouped Services By Section */}
+              {serviceSections.map((section: IndustrySection) => {
+                const linkedServices = content.services.filter(s => s.section_id === section.id);
+                if (linkedServices.length === 0) return null;
+
+                return (
+                  <div key={section.id} id={`section-${section.id}`} className="mb-32 scroll-mt-32">
+                    <div className="flex items-center justify-between mb-12">
+                      <h2 className="text-4xl font-black text-white">{section.title}</h2>
+                      <div className="h-px flex-1 mx-8 bg-gradient-to-r from-[#cfd9cc]/20 to-transparent" />
+                    </div>
+                    {section.description && (
+                      <p className="text-xl text-[#cfd9cc]/60 mb-10 leading-relaxed font-light">{section.description}</p>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {linkedServices.map((sub: IndustrySubService) => (
+                        <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Unlinked / General Services */}
+              {unlinkedServices.length > 0 && (
+                <div className="mb-32">
+                  <div className="flex items-center justify-between mb-12">
+                    <h2 className="text-4xl font-black text-white">خدمات إضافية متوفرة</h2>
+                    <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {unlinkedServices.map((sub: IndustrySubService) => (
+                      <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Fallback Features if no services at all */}
+              {content.services.length === 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white mt-12">
+                  <div className="glass p-8 rounded-3xl">
+                    <Globe size={48} className="mx-auto mb-6 text-blue-400" />
+                    <h3 className="text-2xl font-bold mb-4">دعم عالمي</h3>
+                    <p className="text-white/60">تعدد اللغات والعملات تلقائياً حسب موقع العميل.</p>
+                  </div>
+                  <div className="glass p-8 rounded-3xl">
+                    <CreditCard size={48} className="mx-auto mb-6 text-emerald-400" />
+                    <h3 className="text-2xl font-bold mb-4">بوابات دفع</h3>
+                    <p className="text-white/60">ربط مباشر مع Stripe, PayPal, Mada, و Apple Pay.</p>
+                  </div>
+                  <div className="glass p-8 rounded-3xl">
+                    <TrendingUp size={48} className="mx-auto mb-6 text-purple-400" />
+                    <h3 className="text-2xl font-bold mb-4">نمو التسويق</h3>
+                    <p className="text-white/60">أدوات SEO و Pixel مدمجة لحملات إعلانية ناجحة.</p>
+                  </div>
+                </div>
+              )}
             </>
-          )}
-        </div>
+          );
+        })()}
       </div>
     </div>
   );
 };
+
+// Extracted SubServiceCard Component for reuse
+const SubServiceCard: React.FC<{ sub: IndustrySubService, industryId: string | undefined, handleBuySubService: () => void }> = ({ sub, industryId, handleBuySubService }) => (
+  <div className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all text-right">
+    <div className="h-64 relative overflow-hidden">
+      <img
+        src={sub.image_url || 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d'}
+        alt={sub.title}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
+      <div className="absolute bottom-6 right-6">
+        <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
+          {sub.has_packages ? 'باقات متعددة' : sub.price}
+        </div>
+      </div>
+    </div>
+
+    <div className="p-10 flex flex-col flex-grow">
+      <h3 className="text-2xl font-black text-white mb-4 group-hover:text-[#cfd9cc] transition-colors">{sub.title}</h3>
+      <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
+
+      <div className="space-y-3 mb-10">
+        {(sub.features || []).map((feature: string, idx: number) => (
+          <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={12} className="text-emerald-400" />
+            </div>
+            {feature}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleBuySubService}
+        className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
+      >
+        {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
+      </button>
+    </div>
+  </div>
+);
 
 export default ProjectEcommerce;

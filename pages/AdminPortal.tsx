@@ -1197,6 +1197,26 @@ const AdminPortal: React.FC = () => {
                             />
                           </div>
 
+                          <div className="space-y-3 pt-2">
+                            <label className="text-[10px] font-black text-white/30 uppercase tracking-widest leading-none">ينتمي إلى قسم (Section)</label>
+                            <select
+                              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-[#cfd9cc]/40 transition-all"
+                              value={sub.section_id || ''}
+                              onChange={(e) => {
+                                const val = e.target.value || null;
+                                setIndustrySubServices(prev => prev.map(s => s.id === sub.id ? { ...s, section_id: val } : s));
+                                handleUpdateIndustryService(sub.id, { section_id: val });
+                              }}
+                            >
+                              <option value="">-- بدون قسم (يعرض أسفل الصفحة) --</option>
+                              {industrySections.map(sec => (
+                                <option key={sec.id} value={sec.id}>
+                                  {sec.title || sec.section_type}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
                           {/* Packages Toggle & UI */}
                           <div className="pt-6 border-t border-white/5 space-y-6">
                             <div className="flex items-center justify-between">

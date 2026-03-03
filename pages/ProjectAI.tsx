@@ -4,20 +4,37 @@ import { useParams } from 'react-router-dom';
 import {
   BrainCircuit, Sparkles, Send, MessageSquare, Bot,
   Zap, Shield, Globe, Cpu, CheckCircle2, ArrowLeft,
-  Terminal, Code2, Database
+  Terminal, Code2, Database, ShoppingBag
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '../src/components/SEO';
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
+import { useCart } from '../src/context/CartContext';
 
 const ProjectAI: React.FC = () => {
   const { industryId } = useParams<{ industryId: string }>();
+  const { addItem } = useCart();
   const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState([
     { role: 'bot', content: 'أهلاً بك! أنا مساعد بصيرة الذكي. كيف يمكنني مساعدتك اليوم في أتمتة أعمالك؟' }
   ]);
   const [input, setInput] = useState('');
+
+  const handleBuySubService = (subService: IndustrySubService) => {
+    if (subService.has_packages) {
+      window.location.hash = `#/service/${industryId || 'ai-assistant'}/${subService.id}/packages`;
+      return;
+    }
+
+    addItem({
+      id: subService.id,
+      type: 'service',
+      title: subService.title,
+      price: subService.price || 0,
+    });
+    window.location.hash = '#/checkout';
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -129,28 +146,74 @@ const ProjectAI: React.FC = () => {
           </div>
         </div>
 
-        {/* Services / Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-32">
-          {content.services.map((sub, i) => (
-            <div key={i} className="glass p-10 rounded-[40px] border-white/5 text-center group hover:border-[#cfd9cc]/20 transition-all">
-              <div className="w-16 h-16 bg-[#1e403a] rounded-2xl flex items-center justify-center mb-8 mx-auto border border-white/5">
-                <div className="text-[#cfd9cc] text-2xl font-bold">
-                  {i + 1}
+        {/* 3. SECTIONS NAVIGATION & SERVICES */}
+        {(() => {
+          const serviceSections = content.sections.filter(s => s.section_type !== 'hero' && s.section_type !== 'interactive_demo');
+          const unlinkedServices = content.services.filter(s => !s.section_id);
+
+          return (
+            <>
+              {/* Filter / Nav Pills */}
+              {serviceSections.length > 0 && (
+                <div className="flex flex-wrap gap-4 mb-20 justify-center">
+                  {serviceSections.map((sec: IndustrySection) => {
+                    const hasServices = content.services.some(s => s.section_id === sec.id);
+                    if (!hasServices) return null; // Hide tabs for empty sections
+
+                    return (
+                      <button
+                        key={sec.id}
+                        onClick={() => document.getElementById(`section-${sec.id}`)?.scrollIntoView({ behavior: 'smooth' })}
+                        className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-[#cfd9cc] font-black hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-all"
+                      >
+                        {sec.title}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-              <h3 className="text-2xl font-black text-white mb-4">{sub.title}</h3>
-              <p className="text-[#cfd9cc]/40 leading-relaxed">{sub.description}</p>
-              <div className="mt-8 pt-8 border-t border-white/5 space-y-3">
-                {(sub.features || []).map((f, idx) => (
-                  <div key={idx} className="flex items-center justify-center gap-2 text-xs text-[#cfd9cc]/60">
-                    <CheckCircle2 size={12} className="text-emerald-400" />
-                    {f}
+              )}
+
+              {/* Grouped Services By Section */}
+              {serviceSections.map((section: IndustrySection) => {
+                const linkedServices = content.services.filter(s => s.section_id === section.id);
+                if (linkedServices.length === 0) return null;
+
+                return (
+                  <div key={section.id} id={`section-${section.id}`} className="mb-32 scroll-mt-32">
+                    <div className="flex items-center justify-between mb-12">
+                      <h2 className="text-4xl font-black text-white">{section.title}</h2>
+                      <div className="h-px flex-1 mx-8 bg-gradient-to-r from-[#cfd9cc]/20 to-transparent" />
+                    </div>
+                    {section.description && (
+                      <p className="text-xl text-[#cfd9cc]/60 mb-10 leading-relaxed font-light">{section.description}</p>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {linkedServices.map((sub: IndustrySubService) => (
+                        <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+                );
+              })}
+
+              {/* Unlinked / General Services */}
+              {unlinkedServices.length > 0 && (
+                <div className="mb-32">
+                  <div className="flex items-center justify-between mb-12">
+                    <h2 className="text-4xl font-black text-white">خدمات إضافية متوفرة</h2>
+                    <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {unlinkedServices.map((sub: IndustrySubService) => (
+                      <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()}
 
         {/* Technical Specs */}
         <div className="glass p-12 md:p-20 rounded-[60px] border-white/5 relative overflow-hidden">
@@ -178,5 +241,47 @@ const ProjectAI: React.FC = () => {
     </div>
   );
 };
+
+// Extracted SubServiceCard Component for reuse
+const SubServiceCard: React.FC<{ sub: IndustrySubService, industryId: string | undefined, handleBuySubService: () => void }> = ({ sub, industryId, handleBuySubService }) => (
+  <div className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all text-right">
+    <div className="h-64 relative overflow-hidden">
+      <img
+        src={sub.image_url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f'}
+        alt={sub.title}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
+      <div className="absolute bottom-6 right-6">
+        <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
+          {sub.has_packages ? 'باقات متعددة' : sub.price}
+        </div>
+      </div>
+    </div>
+
+    <div className="p-10 flex flex-col flex-grow">
+      <h3 className="text-2xl font-black text-white mb-4 group-hover:text-[#cfd9cc] transition-colors">{sub.title}</h3>
+      <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
+
+      <div className="space-y-3 mb-10">
+        {(sub.features || []).map((feature: string, idx: number) => (
+          <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={12} className="text-emerald-400" />
+            </div>
+            {feature}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleBuySubService}
+        className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
+      >
+        {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
+      </button>
+    </div>
+  </div>
+);
 
 export default ProjectAI;

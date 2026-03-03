@@ -107,57 +107,119 @@ const ProjectCafe: React.FC = () => {
           </section>
         )}
 
-        {/* 3. SERVICE CATALOG (List) */}
-        <div className="flex items-center justify-between mb-12">
-          <h2 className="text-4xl font-black text-white">الخدمات المتوفرة</h2>
-          <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
-        </div>
+        {/* 3. SECTIONS NAVIGATION & SERVICES */}
+        {(() => {
+          const serviceSections = content.sections.filter(s => s.section_type !== 'hero' && s.section_type !== 'interactive_demo');
+          const unlinkedServices = content.services.filter(s => !s.section_id);
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {content.services.map((sub: IndustrySubService) => (
-            <div key={sub.id} className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all">
-              <div className="h-64 relative overflow-hidden">
-                <img
-                  src={sub.image_url || 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d'}
-                  alt={sub.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
-                <div className="absolute bottom-6 right-6">
-                  <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
-                    {sub.price}
+          return (
+            <>
+              {/* Filter / Nav Pills */}
+              {serviceSections.length > 0 && (
+                <div className="flex flex-wrap gap-4 mb-20 justify-center">
+                  {serviceSections.map((sec: IndustrySection) => {
+                    const hasServices = content.services.some(s => s.section_id === sec.id);
+                    if (!hasServices) return null; // Hide tabs for empty sections
+
+                    return (
+                      <button
+                        key={sec.id}
+                        onClick={() => document.getElementById(`section-${sec.id}`)?.scrollIntoView({ behavior: 'smooth' })}
+                        className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-[#cfd9cc] font-black hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-all"
+                      >
+                        {sec.title}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Grouped Services By Section */}
+              {serviceSections.map((section: IndustrySection) => {
+                const linkedServices = content.services.filter(s => s.section_id === section.id);
+                if (linkedServices.length === 0) return null;
+
+                return (
+                  <div key={section.id} id={`section-${section.id}`} className="mb-32 scroll-mt-32">
+                    <div className="flex items-center justify-between mb-12">
+                      <h2 className="text-4xl font-black text-white">{section.title}</h2>
+                      <div className="h-px flex-1 mx-8 bg-gradient-to-r from-[#cfd9cc]/20 to-transparent" />
+                    </div>
+                    {section.description && (
+                      <p className="text-xl text-[#cfd9cc]/60 mb-10 leading-relaxed font-light">{section.description}</p>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {linkedServices.map((sub: IndustrySubService) => (
+                        <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Unlinked / General Services */}
+              {unlinkedServices.length > 0 && (
+                <div className="mb-32">
+                  <div className="flex items-center justify-between mb-12">
+                    <h2 className="text-4xl font-black text-white">خدمات إضافية متوفرة</h2>
+                    <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    {unlinkedServices.map((sub: IndustrySubService) => (
+                      <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                    ))}
                   </div>
                 </div>
-              </div>
-
-              <div className="p-10 flex flex-col flex-grow">
-                <h3 className="text-2xl font-black text-white mb-4 group-hover:text-[#cfd9cc] transition-colors">{sub.title}</h3>
-                <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
-
-                <div className="space-y-3 mb-10">
-                  {(sub.features || []).map((feature: string, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
-                      <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                        <CheckCircle2 size={12} className="text-emerald-400" />
-                      </div>
-                      {feature}
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => handleBuySubService(sub)}
-                  className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
-                >
-                  {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+              )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );
 };
+
+// Extracted SubServiceCard Component for reuse
+const SubServiceCard: React.FC<{ sub: IndustrySubService, industryId: string | undefined, handleBuySubService: () => void }> = ({ sub, industryId, handleBuySubService }) => (
+  <div className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all text-right">
+    <div className="h-64 relative overflow-hidden">
+      <img
+        src={sub.image_url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f'}
+        alt={sub.title}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
+      <div className="absolute bottom-6 right-6">
+        <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
+          {sub.has_packages ? 'باقات متعددة' : sub.price}
+        </div>
+      </div>
+    </div>
+
+    <div className="p-10 flex flex-col flex-grow">
+      <h3 className="text-2xl font-black text-white mb-4 group-hover:text-[#cfd9cc] transition-colors">{sub.title}</h3>
+      <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
+
+      <div className="space-y-3 mb-10">
+        {(sub.features || []).map((feature: string, idx: number) => (
+          <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
+            <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={12} className="text-emerald-400" />
+            </div>
+            {feature}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleBuySubService}
+        className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
+      >
+        {sub.has_packages ? 'استعراض الباقات' : 'طلب الخدمة الآن'} <ShoppingBag size={20} />
+      </button>
+    </div>
+  </div>
+);
 
 export default ProjectCafe;

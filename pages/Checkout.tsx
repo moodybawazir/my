@@ -66,27 +66,24 @@ const Checkout: React.FC = () => {
                 // Handle Subscriptions for packages
                 for (const item of items) {
                     if (item.type === 'service_package' && item.metadata) {
-                        const { billing_cycle, billing_days } = item.metadata;
-                        let durationDays = 30;
-                        if (billing_cycle === 'monthly') durationDays = 30;
-                        else if (billing_cycle === 'yearly') durationDays = 365;
-                        else if (billing_cycle === 'custom_days') durationDays = parseInt(billing_days) || 30;
-
+                        const { package_id, duration_type } = item.metadata;
                         const startDate = new Date();
-                        const endDate = new Date();
-                        endDate.setDate(endDate.getDate() + durationDays);
 
-                        const { error: subError } = await supabase.from('subscriptions').insert({
-                            user_id: user.id,
-                            plan_name: item.title,
-                            price: item.price,
-                            status: 'active',
-                            start_date: startDate.toISOString(),
-                            end_date: endDate.toISOString(),
-                            created_at: new Date().toISOString()
+                        const { data: subData, error: subError } = await supabase.rpc('create_subscription', {
+                            p_client_id: user.id,
+                            p_package_id: package_id,
+                            p_duration_type: duration_type || 'monthly',
+                            p_start_date: startDate.toISOString().split('T')[0],
+                            p_auto_renew: duration_type !== 'trial', // Do not auto-renew trials
+                            p_notes: 'Created from web checkout',
+                            p_coupon_code: null
                         });
 
-                        if (subError) console.error('Error creating subscription:', subError);
+                        if (subError) {
+                            console.error('Error creating subscription:', subError);
+                        } else {
+                            console.log('Subscription created successfully:', subData);
+                        }
                     }
                 }
             }
