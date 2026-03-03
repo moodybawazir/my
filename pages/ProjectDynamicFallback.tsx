@@ -18,6 +18,7 @@ const ProjectDynamicFallback: React.FC = () => {
     const { addItem } = useCart();
     const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
     const [loading, setLoading] = useState(true);
+    const [activeSection, setActiveSection] = useState<string>('all');
 
     useEffect(() => {
         const load = async () => {
@@ -70,83 +71,92 @@ const ProjectDynamicFallback: React.FC = () => {
             />
 
             <div className="max-w-7xl mx-auto">
-                {/* Dynamic Sections and Their Linked Services */}
-                {content.sections.map((section) => {
-                    const linkedServices = content.services.filter(s => s.section_id === section.id);
+                {/* 3. SECTIONS NAVIGATION & SERVICES */}
+                {(() => {
+                    const serviceSections = content.sections.filter(s => s.section_type !== 'hero' && s.section_type !== 'interactive_demo');
+                    const unlinkedServices = content.services.filter(s => !s.section_id);
 
                     return (
-                        <div key={section.id} className="mb-32">
-                            {/* Section Content */}
-                            <section className="mb-12">
-                                <div className="glass p-12 md:p-24 rounded-[60px] relative overflow-hidden group border border-white/5">
-                                    <div className="absolute inset-0 bg-gradient-to-r from-[#cfd9cc]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
-                                        <div className="space-y-8">
-                                            <div className="inline-flex items-center gap-2 text-[#cfd9cc] font-black uppercase tracking-[0.2em] text-sm">
-                                                {section.section_type === 'hero' ? <Sparkles size={18} /> :
-                                                    section.section_type === 'interactive_demo' ? <Zap size={18} /> : <Layout size={18} />}
-                                                {section.subtitle}
-                                            </div>
-                                            <h2 className="text-4xl md:text-6xl font-black text-white leading-tight">
-                                                {section.title}
-                                            </h2>
-                                            <p className="text-xl md:text-2xl text-[#cfd9cc]/60 leading-relaxed font-light">
-                                                {section.description}
-                                            </p>
-                                        </div>
-
-                                        <div className="relative aspect-video rounded-[40px] overflow-hidden border border-white/10 shadow-3xl group-hover:border-[#cfd9cc]/40 transition-all duration-700">
-                                            {section.image_url && (
-                                                <img
-                                                    src={section.image_url}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                                                    alt={section.title}
-                                                />
-                                            )}
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-[#0d2226]/40 via-transparent to-transparent" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Linked Sub-services Grid */}
-                            {linkedServices.length > 0 && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mt-12">
-                                    {linkedServices.map((sub) => (
-                                        <SubServiceCard
-                                            key={sub.id}
-                                            sub={sub}
-                                            industryId={industryId}
-                                            handleBuySubService={() => handleBuySubService(sub)}
-                                        />
+                        <>
+                            {/* Filter / Nav Pills */}
+                            {serviceSections.length > 0 && (
+                                <div className="flex flex-wrap gap-4 mb-16 justify-center">
+                                    <button
+                                        onClick={() => setActiveSection('all')}
+                                        className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === 'all' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
+                                    >
+                                        عرض الكل
+                                    </button>
+                                    {serviceSections.map((sec: IndustrySection) => (
+                                        <button
+                                            key={sec.id}
+                                            onClick={() => setActiveSection(sec.id)}
+                                            className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === sec.id ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
+                                        >
+                                            {sec.title}
+                                        </button>
                                     ))}
                                 </div>
                             )}
-                        </div>
+
+                            {/* Grouped Services By Section */}
+                            {serviceSections.map((section: IndustrySection) => {
+                                if (activeSection !== 'all' && activeSection !== section.id) return null;
+
+                                const linkedServices = content.services.filter(s => s.section_id === section.id);
+
+                                return (
+                                    <div key={section.id} className="mb-24 animate-fade-in">
+                                        {/* Section Banner/Header */}
+                                        <div className="glass p-12 md:p-16 rounded-[40px] relative overflow-hidden group border border-white/5 mb-12">
+                                            <div className="absolute inset-0 bg-gradient-to-r from-[#cfd9cc]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                            <div className="relative z-10">
+                                                <div className="inline-flex items-center gap-2 text-[#cfd9cc] font-black uppercase tracking-[0.2em] text-sm mb-4">
+                                                    {section.section_type === 'hero' ? <Sparkles size={18} /> :
+                                                        section.section_type === 'interactive_demo' ? <Zap size={18} /> : <Layout size={18} />}
+                                                    {section.subtitle}
+                                                </div>
+                                                <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-6">
+                                                    {section.title}
+                                                </h2>
+                                                <p className="text-xl text-[#cfd9cc]/60 leading-relaxed font-light max-w-3xl">
+                                                    {section.description}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {linkedServices.length > 0 ? (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                                {linkedServices.map((sub: IndustrySubService) => (
+                                                    <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/10">
+                                                <p className="text-[#cfd9cc]/40 font-bold">الخدمات قريباً في هذا القسم...</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+
+                            {/* Unlinked / General Services */}
+                            {(activeSection === 'all' && unlinkedServices.length > 0) && (
+                                <div className="mb-24 animate-fade-in">
+                                    <div className="flex items-center justify-between mb-12">
+                                        <h2 className="text-4xl font-black text-white">خدمات إضافية متوفرة</h2>
+                                        <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                        {unlinkedServices.map((sub: IndustrySubService) => (
+                                            <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     );
-                })}
-
-                {/* 4. Unlinked Sub-services Grid */}
-                {content.services.filter(s => !s.section_id).length > 0 && (
-                    <div className="mt-32">
-                        <div className="flex items-center justify-between mb-12">
-                            <h2 className="text-4xl font-black text-white">خدمات إضافية</h2>
-                            <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                            {content.services.filter(s => !s.section_id).map((sub: IndustrySubService) => (
-                                <SubServiceCard
-                                    key={sub.id}
-                                    sub={sub}
-                                    industryId={industryId}
-                                    handleBuySubService={() => handleBuySubService(sub)}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                )}
+                })()}
             </div>
         </div>
     );

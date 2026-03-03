@@ -13,6 +13,7 @@ const ProjectMedical: React.FC = () => {
   const { addItem } = useCart();
   const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<string>('all');
 
   const handleBuySubService = (subService: IndustrySubService) => {
     if (subService.has_packages) {
@@ -103,31 +104,33 @@ const ProjectMedical: React.FC = () => {
             <>
               {/* Filter / Nav Pills */}
               {serviceSections.length > 0 && (
-                <div className="flex flex-wrap gap-4 mb-20 justify-center">
-                  {serviceSections.map((sec: IndustrySection) => {
-                    const hasServices = content.services.some(s => s.section_id === sec.id);
-                    if (!hasServices) return null; // Hide tabs for empty sections
-
-                    return (
-                      <button
-                        key={sec.id}
-                        onClick={() => document.getElementById(`section-${sec.id}`)?.scrollIntoView({ behavior: 'smooth' })}
-                        className="px-8 py-3 rounded-full bg-white/5 border border-white/10 text-[#cfd9cc] font-black hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-all"
-                      >
-                        {sec.title}
-                      </button>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-4 mb-16 justify-center">
+                  <button
+                    onClick={() => setActiveSection('all')}
+                    className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === 'all' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
+                  >
+                    عرض الكل
+                  </button>
+                  {serviceSections.map((sec: IndustrySection) => (
+                    <button
+                      key={sec.id}
+                      onClick={() => setActiveSection(sec.id)}
+                      className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === sec.id ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
+                    >
+                      {sec.title}
+                    </button>
+                  ))}
                 </div>
               )}
 
               {/* Grouped Services By Section */}
               {serviceSections.map((section: IndustrySection) => {
+                if (activeSection !== 'all' && activeSection !== section.id) return null;
+
                 const linkedServices = content.services.filter(s => s.section_id === section.id);
-                if (linkedServices.length === 0) return null;
 
                 return (
-                  <div key={section.id} id={`section-${section.id}`} className="mb-32 scroll-mt-32">
+                  <div key={section.id} className="mb-24 animate-fade-in">
                     <div className="flex items-center justify-between mb-12">
                       <h2 className="text-4xl font-black text-white">{section.title}</h2>
                       <div className="h-px flex-1 mx-8 bg-gradient-to-r from-[#cfd9cc]/20 to-transparent" />
@@ -136,18 +139,24 @@ const ProjectMedical: React.FC = () => {
                       <p className="text-xl text-[#cfd9cc]/60 mb-10 leading-relaxed font-light">{section.description}</p>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                      {linkedServices.map((sub: IndustrySubService) => (
-                        <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
-                      ))}
-                    </div>
+                    {linkedServices.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        {linkedServices.map((sub: IndustrySubService) => (
+                          <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/10">
+                        <p className="text-[#cfd9cc]/40 font-bold">الخدمات قريباً في هذا القسم...</p>
+                      </div>
+                    )}
                   </div>
                 );
               })}
 
               {/* Unlinked / General Services */}
-              {unlinkedServices.length > 0 && (
-                <div className="mb-32">
+              {(activeSection === 'all' && unlinkedServices.length > 0) && (
+                <div className="mb-24 animate-fade-in">
                   <div className="flex items-center justify-between mb-12">
                     <h2 className="text-4xl font-black text-white">خدمات إضافية متوفرة</h2>
                     <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
