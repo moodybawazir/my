@@ -69,7 +69,7 @@ const Checkout: React.FC = () => {
                         const { package_id, duration_type } = item.metadata;
                         const startDate = new Date();
 
-                        const { data: subData, error: subError } = await supabase.rpc('create_subscription', {
+                        const { data: subData, error: subError } = await (supabase as any).rpc('create_subscription', {
                             p_client_id: user.id,
                             p_package_id: package_id,
                             p_duration_type: duration_type || 'monthly',

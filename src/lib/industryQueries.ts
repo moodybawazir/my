@@ -28,6 +28,7 @@ export interface IndustrySubService {
     sort_order: number;
     has_packages?: boolean;
     packages?: any[];
+    real_packages?: any[];
 }
 
 export interface LoyaltyProgram {

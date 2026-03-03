@@ -18,7 +18,7 @@ const ServicePackages: React.FC = () => {
         const load = async () => {
             if (!serviceId) return;
             try {
-                const { data: serviceData, error: serviceError } = await supabase
+                const { data: serviceData, error: serviceError } = await (supabase as any)
                     .from('industry_sub_services')
                     .select('*')
                     .eq('id', serviceId)
@@ -26,7 +26,7 @@ const ServicePackages: React.FC = () => {
 
                 if (serviceData) {
                     if (serviceData.has_packages) {
-                        const { data: packagesData, error: packagesError } = await supabase
+                        const { data: packagesData, error: packagesError } = await (supabase as any)
                             .from('packages')
                             .select('*, package_durations(*), package_features(*)')
                             .eq('sub_service_id', serviceId)
@@ -34,7 +34,7 @@ const ServicePackages: React.FC = () => {
                             .order('sort_order');
 
                         if (!packagesError && packagesData) {
-                            serviceData.real_packages = packagesData;
+                            (serviceData as any).real_packages = packagesData;
                         }
                     }
                     setService(serviceData as any);

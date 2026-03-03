@@ -163,7 +163,7 @@ const ProjectDynamicFallback: React.FC = () => {
 };
 
 // Extracted SubServiceCard Component for reuse
-const SubServiceCard = ({ sub, industryId, handleBuySubService }: { sub: IndustrySubService, industryId: string | undefined, handleBuySubService: () => void }) => (
+const SubServiceCard = ({ sub, industryId, handleBuySubService }: { sub: IndustrySubService, industryId: string | undefined, handleBuySubService: () => void, key?: string }) => (
     <div className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all border border-white/5">
         <div className="h-64 relative overflow-hidden">
             <img

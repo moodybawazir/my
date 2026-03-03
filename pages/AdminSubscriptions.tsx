@@ -35,8 +35,8 @@ export default function AdminSubscriptions() {
         setLoading(true);
         const [subsRes, couponsRes, indRes, custRes] = await Promise.all([
             // In Supabase, joining across foreign keys:
-            supabase.from('subscriptions').select('*, users:client_id(name, email), packages:package_id(name_ar)').order('created_at', { ascending: false }),
-            supabase.from('coupons').select('*').order('created_at', { ascending: false }),
+            (supabase as any).from('subscriptions').select('*, users:client_id(name, email), packages:package_id(name_ar)').order('created_at', { ascending: false }),
+            (supabase as any).from('coupons').select('*').order('created_at', { ascending: false }),
             supabase.from('industry_sections').select('id, title'),
             supabase.from('users').select('id, name, email').eq('role', 'user')
         ]);
