@@ -25,6 +25,7 @@ import StoreProductDetail from './pages/StoreProductDetail';
 import StoreAdmin from './pages/StoreAdmin';
 import Policy from './pages/Policy';
 import ServicePackages from './pages/ServicePackages';
+import AdminSubscriptions from './pages/AdminSubscriptions';
 import { supabase } from './src/lib/supabase';
 
 // Component to catch and process Supabase implicit grant hashes (like access_token=...) 
@@ -185,6 +186,7 @@ const App: React.FC = () => {
                 <Route path="/admin" element={<AdminPortal />} />
                 <Route path="/admin/services/:id/subscriptions" element={<ServiceSubscriptionsAdmin />} />
                 <Route path="/admin/store" element={<StoreAdmin />} />
+                <Route path="/admin/subscriptions" element={<AdminSubscriptions />} />
               </Route>
             </Routes>
           </Router>

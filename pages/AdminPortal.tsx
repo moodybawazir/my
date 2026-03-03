@@ -16,6 +16,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../src/lib/supabase';
 import { useAuth } from '../src/context/AuthContext';
 import { useStorage } from '../src/hooks/useStorage';
+import SubServicePackagesManager from '../src/components/admin/SubServicePackagesManager';
 
 const STORAGE_KEYS = {
   HOME: 'baseerah_home_content',
@@ -524,6 +525,7 @@ const AdminPortal: React.FC = () => {
             { id: 'invoices', label: 'الفواتير', icon: FileText },
             { id: 'content', label: 'إدارة المحتوى', icon: Layers },
             { id: 'store', label: 'إدارة المتجر', icon: Tag, path: '/admin/store' },
+            { id: 'subscriptions', label: 'الاشتراكات والكوبونات', icon: Activity, path: '/admin/subscriptions' },
             { id: 'messages', label: 'رسائل التواصل', icon: MessageSquare },
             { id: 'settings', label: 'الإعدادات', icon: Settings },
           ].map(item => (
@@ -1208,85 +1210,7 @@ const AdminPortal: React.FC = () => {
                             </div>
 
                             {sub.has_packages && (
-                              <div className="space-y-4 bg-black/20 p-6 rounded-[30px] border border-white/5">
-                                <div className="flex justify-between items-center mb-4">
-                                  <h5 className="font-black text-[#cfd9cc] text-sm">الباقات المتاحة</h5>
-                                  <button
-                                    onClick={() => handleAddSubServicePackage(sub.id, sub.packages)}
-                                    className="text-xs font-bold text-[#cfd9cc] bg-[#cfd9cc]/10 px-3 py-1.5 rounded-lg hover:bg-[#cfd9cc] hover:text-[#0d2226] transition-colors flex items-center gap-1"
-                                  >
-                                    <Plus size={14} /> إضافة باقة
-                                  </button>
-                                </div>
-
-                                <div className="space-y-4">
-                                  {sub.packages && sub.packages.map((pkg: any) => (
-                                    <div key={pkg.id} className="bg-white/5 p-5 rounded-2xl border border-white/5 space-y-4 relative group/pkg">
-                                      <button
-                                        onClick={() => handleRemoveSubServicePackage(sub.id, sub.packages, pkg.id)}
-                                        className="absolute left-4 top-4 text-red-400/50 hover:text-red-400 transition-colors"
-                                      >
-                                        <Trash2 size={16} />
-                                      </button>
-
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <label className="text-[10px] font-bold text-white/30 block mb-2">اسم الباقة</label>
-                                          <input
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#cfd9cc]/40"
-                                            defaultValue={pkg.name}
-                                            onBlur={(e) => handleUpdateSubServicePackage(sub.id, sub.packages, pkg.id, { name: e.target.value })}
-                                          />
-                                        </div>
-                                        <div>
-                                          <label className="text-[10px] font-bold text-white/30 block mb-2">السعر</label>
-                                          <input
-                                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white text-sm outline-none focus:border-[#cfd9cc]/40 font-mono"
-                                            defaultValue={pkg.price}
-                                            onBlur={(e) => handleUpdateSubServicePackage(sub.id, sub.packages, pkg.id, { price: e.target.value })}
-                                          />
-                                        </div>
-                                      </div>
-
-                                      <div>
-                                        <label className="text-[10px] font-bold text-white/30 flex justify-between items-center mb-2">
-                                          <span>المميزات (نقاط تشملها)</span>
-                                          <button
-                                            onClick={() => handleUpdateSubServicePackage(sub.id, sub.packages, pkg.id, { features: [...(pkg.features || []), 'ميزة جديدة'] })}
-                                            className="text-[#cfd9cc]/70 hover:text-[#cfd9cc] text-[10px] underline"
-                                          >إضافة ميزة</button>
-                                        </label>
-                                        <div className="space-y-2">
-                                          {(pkg.features || []).map((feat: string, idx: number) => (
-                                            <div key={idx} className="flex gap-2">
-                                              <input
-                                                className="flex-1 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-white/80 text-xs outline-none focus:border-[#cfd9cc]/40"
-                                                defaultValue={feat}
-                                                onBlur={(e) => {
-                                                  const newFeats = [...pkg.features];
-                                                  newFeats[idx] = e.target.value;
-                                                  handleUpdateSubServicePackage(sub.id, sub.packages, pkg.id, { features: newFeats });
-                                                }}
-                                              />
-                                              <button
-                                                onClick={() => {
-                                                  const newFeats = [...pkg.features];
-                                                  newFeats.splice(idx, 1);
-                                                  handleUpdateSubServicePackage(sub.id, sub.packages, pkg.id, { features: newFeats });
-                                                }}
-                                                className="p-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
-                                              ><X size={14} /></button>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {(!sub.packages || sub.packages.length === 0) && (
-                                    <div className="text-center text-[#cfd9cc]/30 text-xs py-4">لا توجد باقات مضافة. أضف باقتك الأولى.</div>
-                                  )}
-                                </div>
-                              </div>
+                              <SubServicePackagesManager subServiceId={sub.id} />
                             )}
                           </div>
                         </div>

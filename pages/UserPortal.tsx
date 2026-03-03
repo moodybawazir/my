@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Clock, CreditCard, Cpu, Settings, Activity,
   ExternalLink, ChevronLeft, Plus, Award, Package,
-  CheckCircle2, AlertCircle, ShoppingBag, LogOut
+  CheckCircle2, AlertCircle, ShoppingBag, LogOut, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../src/context/AuthContext';
@@ -16,6 +16,9 @@ const UserPortal: React.FC = () => {
   const [purchasedProducts, setPurchasedProducts] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRenewModalOpen, setIsRenewModalOpen] = useState(false);
+  const [renewSubId, setRenewSubId] = useState<string | null>(null);
+  const [renewing, setRenewing] = useState(false);
   const navigate = useNavigate();
 
   // Admin redirect safety hatch
@@ -35,7 +38,18 @@ const UserPortal: React.FC = () => {
       if (prof) setProfile(prof);
 
       // Fetch Subscriptions
-      const { data: subs } = await supabase.from('subscriptions').select('*').eq('user_id', user.id);
+      const { data: subs } = await (supabase as any).from('subscriptions')
+        .select(`
+          *,
+          packages (
+            name_ar,
+            sub_services (
+              title
+            )
+          )
+        `)
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
       if (subs) setActiveSubscriptions(subs);
 
       // Fetch Orders/Products
@@ -65,6 +79,45 @@ const UserPortal: React.FC = () => {
 
     fetchUserData();
   }, [user]);
+
+  const handleRenewSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!renewSubId) return;
+    setRenewing(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const data = Object.fromEntries(fd.entries());
+      const selectedSub = activeSubscriptions.find((s) => s.id === renewSubId);
+
+      const durationMap: any = { '1': 'monthly', '3': 'quarterly', '6': 'semi_annual', '12': 'annual' };
+
+      const { error } = await (supabase as any).rpc('renew_subscription', {
+        p_subscription_id: renewSubId,
+        p_new_duration_type: durationMap[data.months as string],
+        p_coupon_code: data.coupon_code || null
+      });
+
+      if (error) throw error;
+
+      alert('تم تجديد الاشتراك وإضافة فاتورة جديدة في حسابك.');
+      setIsRenewModalOpen(false);
+
+      // Reload profile data
+      const { data: subs } = await (supabase as any).from('subscriptions')
+        .select('*, packages (name_ar, sub_services(title))')
+        .eq('client_id', user.id).order('created_at', { ascending: false });
+      if (subs) setActiveSubscriptions(subs);
+
+      const { data: invs } = await (supabase as any).from('invoices').select('*').eq('user_id', user.id).order('date', { ascending: false });
+      if (invs) setInvoices(invs);
+
+    } catch (err: any) {
+      console.error(err);
+      alert('حدث خطأ أثناء التجديد: ' + err.message);
+    } finally {
+      setRenewing(false);
+    }
+  };
 
   const totalPayments = purchasedProducts.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
   const daysRemaining = activeSubscriptions.length > 0
@@ -146,13 +199,13 @@ const UserPortal: React.FC = () => {
                     {activeSubscriptions.map((sub) => (
                       <tr key={sub.id} className="group hover:bg-white/5 transition-colors">
                         <td className="py-6">
-                          <div className="font-black text-white">{sub.plan_name}</div>
-                          <div className="text-[10px] text-[#cfd9cc]/30">{sub.price} ريال / شهري</div>
+                          <div className="font-black text-white">{sub.packages?.name_ar || 'باقة محذوفة'}</div>
+                          <div className="text-[10px] text-[#cfd9cc]/30">{sub.packages?.sub_services?.title} - {sub.duration_type === 'monthly' ? 'شهري' : sub.duration_type === 'quarterly' ? 'ربع سنوي' : sub.duration_type === 'semi_annual' ? 'نصف سنوي' : 'سنوي'}</div>
                         </td>
                         <td className="py-6">
-                          <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase ${sub.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                          <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase ${sub.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' : sub.status === 'pending' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-500'
                             }`}>
-                            {sub.status === 'active' ? 'نشط' : (sub.status === 'trial' ? 'تجريبي' : 'منتهي')}
+                            {sub.status === 'active' ? 'نشط' : sub.status === 'pending' ? 'بانتظار الدفع' : 'منتهي'}
                           </span>
                         </td>
                         <td className="py-6 font-bold text-white">
@@ -160,7 +213,12 @@ const UserPortal: React.FC = () => {
                         </td>
                         <td className="py-6 text-[#cfd9cc]/40 text-sm">{new Date(sub.end_date).toLocaleDateString('ar-SA')}</td>
                         <td className="py-6">
-                          <button className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl text-xs font-black hover:bg-white transition-all shadow-glow">تجديد</button>
+                          <button
+                            onClick={() => { setRenewSubId(sub.id); setIsRenewModalOpen(true); }}
+                            className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl text-xs font-black hover:bg-white transition-all shadow-glow"
+                          >
+                            تجديد
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -245,6 +303,44 @@ const UserPortal: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Renewal Modal */}
+      {isRenewModalOpen && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0b1b1e] rounded-3xl p-8 max-w-md w-full border border-white/10 shadow-2xl relative">
+            <button onClick={() => setIsRenewModalOpen(false)} className="absolute top-6 left-6 text-white/40 hover:text-white"><X size={24} /></button>
+            <h3 className="text-2xl font-black text-white mb-6 flex items-center gap-3">
+              <Activity className="text-[#cfd9cc]" /> تجديد الاشتراك
+            </h3>
+
+            <form onSubmit={handleRenewSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-white/60 mb-2">مدة التجديد بالشهور</label>
+                <select name="months" required className="w-full bg-[#112a2f] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#cfd9cc]/40">
+                  <option value="1">شهر واحد</option>
+                  <option value="3">٣ أشهر (ربع سنوي)</option>
+                  <option value="6">٦ أشهر (نصف سنوي)</option>
+                  <option value="12">سنة كاملة (سنوي)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-white/60 mb-2">كود الخصم (إن وجد)</label>
+                <input name="coupon_code" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-[#cfd9cc]/40 font-mono text-left uppercase" dir="ltr" placeholder="TARGET20" />
+              </div>
+
+              <div className="bg-[#cfd9cc]/10 text-[#cfd9cc] p-4 rounded-xl text-xs leading-relaxed font-bold flex gap-3">
+                <CheckCircle2 className="shrink-0" size={16} />
+                سيتم إصدار فاتورة جديدة للمدة المحددة وتحديث تاريخ الانتهاء تلقائياً لضمان استمرارية الخدمة.
+              </div>
+
+              <button disabled={renewing} type="submit" className="w-full bg-[#cfd9cc] text-[#0d2226] font-black py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-colors disabled:opacity-50 mt-4">
+                تأكيد التجديد
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
