@@ -43,7 +43,7 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
             sort_order: packages.length
         };
 
-        const { data, error } = await (supabase as any).from().insert([newPkg]).select().single();
+        const { data, error } = await (supabase as any).from('packages').insert([newPkg]).select().single();
         if (!error && data) {
             setPackages([...packages, { ...data, durations: [], features: [] }]);
         }
@@ -55,7 +55,7 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
 
     const handleDeletePackage = async (id: string) => {
         if (confirm('هل أنت متأكد من حذف هذه الباقة وكل أسعارها ومميزاتها؟')) {
-            await (supabase as any).from().delete().eq('id', id);
+            await (supabase as any).from('packages').delete().eq('id', id);
             setPackages(packages.filter(p => p.id !== id));
         }
     };
@@ -63,7 +63,7 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
     const handleSavePackage = async (pkg: any) => {
         setSaving(true);
         // update base package
-        await (supabase as any).from().update({
+        await (supabase as any).from('packages').update({
             name_ar: pkg.name_ar,
             is_popular: pkg.is_popular,
             is_active: pkg.is_active
@@ -73,21 +73,21 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
         // Ensure any previously existing durations not in pkg.durations are removed, or just handled.
         // For simplicity, we only Update/Insert handled durations. If they disabled trial, we should probably delete it.
         // Let's delete removed durations:
-        const { data: existingDurations } = await (supabase as any).from().select('id').eq('package_id', pkg.id);
+        const { data: existingDurations } = await (supabase as any).from('package_durations').select('id').eq('package_id', pkg.id);
         const currentDurationIds = pkg.durations.filter((d: any) => !d.id.startsWith('temp_')).map((d: any) => d.id);
         if (existingDurations) {
             const toDelete = existingDurations.filter((ed: any) => !currentDurationIds.includes(ed.id));
             for (const d of toDelete) {
-                await (supabase as any).from().delete().eq('id', d.id);
+                await (supabase as any).from('package_durations').delete().eq('id', d.id);
             }
         }
 
         for (const duration of pkg.durations) {
             if (duration.id.startsWith('temp_')) {
                 const { id, ...rest } = duration;
-                await (supabase as any).from().insert([{ ...rest, package_id: pkg.id }]);
+                await (supabase as any).from('package_durations').insert([{ ...rest, package_id: pkg.id }]);
             } else {
-                await (supabase as any).from().update({
+                await (supabase as any).from('package_durations').update({
                     price: duration.price,
                     discount_percentage: duration.discount_percentage
                 }).eq('id', duration.id);
@@ -99,9 +99,9 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
             const feat = pkg.features[i];
             if (feat.id.startsWith('temp_')) {
                 const { id, ...rest } = feat;
-                await (supabase as any).from().insert([{ ...rest, package_id: pkg.id, sort_order: i }]);
+                await (supabase as any).from('package_features').insert([{ ...rest, package_id: pkg.id, sort_order: i }]);
             } else {
-                await (supabase as any).from().update({
+                await (supabase as any).from('package_features').update({
                     feature_text: feat.feature_text,
                     is_highlighted: feat.is_highlighted,
                     sort_order: i
@@ -122,7 +122,7 @@ const SubServicePackagesManager: React.FC<SubServicePackagesManagerProps> = ({ s
 
     const removeFeature = async (pkgId: string, featId: string) => {
         if (!featId.startsWith('temp_')) {
-            await (supabase as any).from().delete().eq('id', featId);
+            await (supabase as any).from('package_features').delete().eq('id', featId);
         }
         const pkg = packages.find(p => p.id === pkgId);
         updatePackageState(pkgId, {
