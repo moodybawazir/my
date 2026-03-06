@@ -3,12 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Sparkles, Building2, ArrowRight } from 'lucide-react';
 import SEO from '../src/components/SEO';
 import ThreeDViewer from '../src/components/ThreeDViewer';
-import { fetchIndustryDemo } from '../src/lib/industryQueries';
+import { fetchIndustryDemo, fetchIndustryContent } from '../src/lib/industryQueries';
 
 const RealEstate3DExperience: React.FC = () => {
     const { industryId } = useParams<{ industryId: string }>();
     const navigate = useNavigate();
     const [villaData, setVillaData] = useState<any>(null);
+    const [demoDescription, setDemoDescription] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [activeRoom, setActiveRoom] = useState(0);
     const [isZooming, setIsZooming] = useState(false);
@@ -17,8 +18,19 @@ const RealEstate3DExperience: React.FC = () => {
         const load = async () => {
             try {
                 const id = industryId || 'real-estate';
-                const demoData = await fetchIndustryDemo(id, 'villa-yagout');
+                const [demoData, contentData] = await Promise.all([
+                    fetchIndustryDemo(id, 'villa-yagout'),
+                    fetchIndustryContent(id)
+                ]);
+
                 setVillaData(demoData);
+
+                const threeDSection = contentData?.sections?.find(s => s.demo_type === 'three_d');
+                if (threeDSection && threeDSection.description) {
+                    setDemoDescription(threeDSection.description);
+                } else {
+                    setDemoDescription('استكشف أدق التفاصيل في نماذجنا ثلاثية الأبعاد. تنقل بين الغرف والمرافق لتجربة واقعية وعيش تفاصيل منزلك المستقبلي قبل بدء التنفيذ عبر تقنيات بصيرة التفاعلية.');
+                }
             } catch (error) {
                 console.error('Error loading real estate demo content:', error);
             } finally {
@@ -82,9 +94,9 @@ const RealEstate3DExperience: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
-                                {/* Short description requested by the user beneath the 3D model */}
+                                {/* Dynamic description fetched from database */}
                                 <div className="mt-8 text-center text-[#cfd9cc]/80 text-lg font-light leading-relaxed max-w-4xl mx-auto bg-white/5 p-6 rounded-3xl border border-white/10">
-                                    استكشف أدق التفاصيل في نماذجنا ثلاثية الأبعاد. تنقل بين الغرف والمرافق لتجربة واقعية وعيش تفاصيل منزلك المستقبلي قبل بدء التنفيذ عبر تقنيات بصيرة التفاعلية.
+                                    {demoDescription}
                                 </div>
                             </div>
                         </div>

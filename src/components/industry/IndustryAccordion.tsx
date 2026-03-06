@@ -7,12 +7,14 @@ interface IndustryAccordionProps {
     section: IndustrySection;
     children: React.ReactNode;
     defaultOpen?: boolean;
+    hideDescription?: boolean;
 }
 
 export const IndustryAccordion: React.FC<IndustryAccordionProps> = ({
     section,
     children,
-    defaultOpen = false
+    defaultOpen = false,
+    hideDescription = false
 }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -62,7 +64,7 @@ export const IndustryAccordion: React.FC<IndustryAccordionProps> = ({
 
                     <div className="flex flex-col lg:flex-row gap-12">
                         <div className="flex-1 relative z-10 w-full">
-                            {section.description && (
+                            {section.description && !hideDescription && (
                                 <p className="text-xl text-[#cfd9cc]/60 mb-12 font-light leading-relaxed drop-shadow-md">
                                     {section.description}
                                 </p>

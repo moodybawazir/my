@@ -173,6 +173,7 @@ const ServiceDetail: React.FC = () => {
                                             key={section.id}
                                             section={section}
                                             defaultOpen={idx === 0}
+                                            hideDescription={section.demo_type === 'three_d'}
                                         >
                                             <div className="space-y-6">
                                                 {linkedServices.map((sub: IndustrySubService) => (
