@@ -9,6 +9,8 @@ import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../sr
 import { ServiceSubscriptions } from '../src/components/subscriptions/ServiceSubscriptions';
 import { useCart } from '../src/context/CartContext';
 import { RandomServices } from '../src/components/industry/RandomServices';
+import { IndustryAccordion } from '../src/components/industry/IndustryAccordion';
+import { SubServiceRow } from '../src/components/industry/SubServiceRow';
 
 
 const IconMap: any = {
@@ -19,7 +21,7 @@ const ServiceDetail: React.FC = () => {
     const { serviceId } = useParams();
     const navigate = useNavigate();
     const { addItem } = useCart();
-    const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
+    const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[], serviceModel?: any } | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeSection, setActiveSection] = useState<string>('all');
 
@@ -57,9 +59,7 @@ const ServiceDetail: React.FC = () => {
             title: subService.title,
             price: numericPrice,
             type: 'service',
-            quantity: 1,
-            description: subService.description,
-            image_url: subService.image_url
+            quantity: 1
         });
     };
 
@@ -156,155 +156,71 @@ const ServiceDetail: React.FC = () => {
                 {content.serviceModel?.has_subscription && serviceId && <ServiceSubscriptions serviceId={serviceId} />}
 
                 {/* SECTIONS NAVIGATION & SERVICES */}
-                {(() => {
-                    const serviceSections = content.sections?.filter((s: any) => s.section_type !== 'hero' && s.section_type !== 'interactive_demo' && s.section_type !== 'features' && s.section_type !== 'feature') || [];
-                    const unlinkedServices = content.services?.filter((s: any) => !s.section_id) || [];
+                <div className="space-y-6">
+                    {(() => {
+                        const serviceSections = content.sections?.filter((s: any) => s.section_type !== 'hero' && s.section_type !== 'interactive_demo' && s.section_type !== 'features' && s.section_type !== 'feature') || [];
+                        const unlinkedServices = content.services?.filter((s: any) => !s.section_id) || [];
 
-                    return (
-                        <>
-                            {/* Filter / Nav Pills */}
-                            {serviceSections.length > 0 && (
-                                <div className="flex flex-wrap gap-4 mb-16 justify-center">
-                                    <button
-                                        onClick={() => setActiveSection('all')}
-                                        className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === 'all' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
-                                    >
-                                        عرض الكل
-                                    </button>
-                                    {serviceSections.map((sec: IndustrySection) => (
-                                        <button
-                                            key={sec.id}
-                                            onClick={() => setActiveSection(sec.id)}
-                                            className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === sec.id ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
+                        return (
+                            <>
+                                {/* Grouped Services By Accordion Section */}
+                                {serviceSections.map((section: IndustrySection, idx: number) => {
+                                    const linkedServices = content.services.filter(s => s.section_id === section.id);
+                                    if (linkedServices.length === 0 && !section.description) return null;
+
+                                    return (
+                                        <IndustryAccordion
+                                            key={section.id}
+                                            section={section}
+                                            defaultOpen={idx === 0}
                                         >
-                                            {sec.title}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {/* Grouped Services By Section */}
-                            {serviceSections.map((section: IndustrySection) => {
-                                if (activeSection !== 'all' && activeSection !== section.id) return null;
-
-                                const linkedServices = content.services.filter(s => s.section_id === section.id);
-
-                                return (
-                                    <div key={section.id} className="mb-24 animate-fade-in">
-                                        <div className="flex items-center justify-between mb-12">
-                                            <h2 className="text-4xl font-black text-white">{section.title}</h2>
-                                            <div className="h-px flex-1 mx-8 bg-gradient-to-r from-[#cfd9cc]/20 to-transparent" />
-                                        </div>
-                                        {section.description && (
-                                            <p className="text-xl text-[#cfd9cc]/60 mb-10 leading-relaxed font-light">{section.description}</p>
-                                        )}
-
-                                        {linkedServices.length > 0 ? (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                                            <div className="space-y-6">
                                                 {linkedServices.map((sub: IndustrySubService) => (
-                                                    <div key={sub.id} className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all border border-white/5">
-                                                        <div className="h-64 relative overflow-hidden">
-                                                            <img
-                                                                src={sub.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475'}
-                                                                alt={sub.title}
-                                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                            />
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
-                                                            <div className="absolute bottom-6 right-6">
-                                                                <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
-                                                                    {sub.has_packages ? 'باقات متعددة' : sub.price}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="p-10 flex flex-col flex-grow">
-                                                            <h3 className="text-2xl font-black text-white mb-4 group-hover:text-[#cfd9cc] transition-colors">{sub.title}</h3>
-                                                            <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
-
-                                                            <div className="space-y-3 mb-10">
-                                                                {(sub.features || []).map((feature: string, idx: number) => (
-                                                                    <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
-                                                                        <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                                                                            <CheckCircle2 size={12} className="text-emerald-400" />
-                                                                        </div>
-                                                                        {feature}
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-
-                                                            <button
-                                                                onClick={() => handleBuySubService(sub)}
-                                                                className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
-                                                            >
-                                                                {sub.has_packages ? 'استعراض الباقات' : 'أضف للسلة'} <ShoppingBag size={20} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                    <SubServiceRow
+                                                        key={sub.id}
+                                                        sub={sub}
+                                                        industryId={serviceId}
+                                                        onBuy={() => handleBuySubService(sub)}
+                                                        onViewDetails={(s) => {
+                                                            if (s.has_packages) {
+                                                                navigate(`/service/${serviceId || 'unknown'}/${s.id}/packages`);
+                                                            }
+                                                        }}
+                                                    />
                                                 ))}
                                             </div>
-                                        ) : (
-                                            <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/10">
-                                                <p className="text-[#cfd9cc]/40 font-bold">الخدمات قريباً في هذا القسم...</p>
-                                            </div>
-                                        )}
+                                        </IndustryAccordion>
+                                    );
+                                })}
+
+                                {/* Unlinked / General Services */}
+                                {unlinkedServices.length > 0 && (
+                                    <div className="mt-24 mb-40">
+                                        <div className="flex items-center justify-between mb-12">
+                                            <h2 className="text-4xl font-black text-white">{serviceSections.length > 0 ? 'خدمات إضافية متوفرة' : 'الخدمات الفرعية'}</h2>
+                                            <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
+                                        </div>
+                                        <div className="space-y-6">
+                                            {unlinkedServices.map((sub: IndustrySubService) => (
+                                                <SubServiceRow
+                                                    key={sub.id}
+                                                    sub={sub}
+                                                    industryId={serviceId}
+                                                    onBuy={() => handleBuySubService(sub)}
+                                                    onViewDetails={(s) => {
+                                                        if (s.has_packages) {
+                                                            navigate(`/service/${serviceId || 'unknown'}/${s.id}/packages`);
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
-                                );
-                            })}
-
-                            {/* Unlinked / General Services */}
-                            {(activeSection === 'all' && unlinkedServices.length > 0) && (
-                                <div className="mb-24 animate-fade-in">
-                                    <div className="flex items-center justify-between mb-12">
-                                        <h2 className="text-4xl font-black text-white">{serviceSections.length > 0 ? 'خدمات إضافية متوفرة' : 'الخدمات الفرعية'}</h2>
-                                        <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                                        {unlinkedServices.map((sub: IndustrySubService) => (
-                                            <div key={sub.id} className="glass rounded-[50px] overflow-hidden flex flex-col group hover:border-[#cfd9cc]/20 transition-all border border-white/5">
-                                                <div className="h-64 relative overflow-hidden">
-                                                    <img
-                                                        src={sub.image_url || 'https://images.unsplash.com/photo-1518770660439-4636190af475'}
-                                                        alt={sub.title}
-                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                                                    />
-                                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-transparent to-transparent" />
-                                                    <div className="absolute bottom-6 right-6">
-                                                        <div className="bg-[#cfd9cc] text-[#0d2226] px-4 py-2 rounded-xl font-black text-sm shadow-xl">
-                                                            {sub.has_packages ? 'باقات متعددة' : sub.price}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="p-10 flex flex-col flex-grow">
-                                                    <h3 className="text-2xl font-black text-white mb-4 group-hover:text-[#cfd9cc] transition-colors">{sub.title}</h3>
-                                                    <p className="text-[#cfd9cc]/40 font-light leading-relaxed mb-8 flex-grow">{sub.description}</p>
-
-                                                    <div className="space-y-3 mb-10">
-                                                        {(sub.features || []).map((feature: string, idx: number) => (
-                                                            <div key={idx} className="flex items-center gap-3 text-sm text-[#cfd9cc]/70">
-                                                                <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                                                                    <CheckCircle2 size={12} className="text-emerald-400" />
-                                                                </div>
-                                                                {feature}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    <button
-                                                        onClick={() => handleBuySubService(sub)}
-                                                        className={`w-full py-5 rounded-2xl font-black transition-all shadow-glow flex items-center justify-center gap-3 active:scale-95 ${sub.has_packages ? 'bg-white/10 text-white hover:bg-white/20 border border-white/10' : 'bg-[#cfd9cc] text-[#0d2226] hover:bg-white'}`}
-                                                    >
-                                                        {sub.has_packages ? 'استعراض الباقات' : 'أضف للسلة'} <ShoppingBag size={20} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    );
-                })()}
+                                )}
+                            </>
+                        );
+                    })()}
+                </div>
 
                 {/* Bottom Random Services */}
                 <RandomServices />
