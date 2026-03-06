@@ -24,6 +24,7 @@ export interface IndustrySubService {
     image_url?: string;
     icon?: string;
     features: string[];
+    section_id?: string;
     is_active: boolean;
     sort_order: number;
     has_packages?: boolean;
@@ -63,21 +64,14 @@ export async function fetchIndustryContent(industryId: string) {
         .eq('industry_id', industryId)
         .maybeSingle();
 
-    const mainServicePromise = supabase
-        .from('services')
-        .select('*')
-        .eq('id', industryId)
-        .maybeSingle();
-
-    const [sections, services, loyalty, mainService] = await Promise.all([
+    const [sections, services, loyalty] = await Promise.all([
         sectionsPromise,
         servicesPromise,
-        loyaltyPromise,
-        mainServicePromise
+        loyaltyPromise
     ]);
 
     return {
-        serviceModel: mainService.data || null,
+        serviceModel: null,
         sections: sections.data as IndustrySection[] || [],
         services: services.data as IndustrySubService[] || [],
         loyalty: loyalty.data as LoyaltyProgram || null
@@ -98,4 +92,21 @@ export async function fetchIndustryDemo(industryId: string, demoKey: string) {
     }
 
     return data?.data;
+}
+export async function fetchRandomSubServices(limit: number = 4) {
+    const { data, error } = await supabase
+        .from('industry_sub_services')
+        .select('*')
+        .eq('is_active', true)
+        .limit(20); // Fetch more than needed to randomize in JS
+
+    if (error) {
+        console.error('Error fetching random services:', error);
+        return [];
+    }
+
+    // Shuffle and pick limit
+    return (data || [])
+        .sort(() => Math.random() - 0.5)
+        .slice(0, limit);
 }

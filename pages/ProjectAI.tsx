@@ -11,12 +11,16 @@ import SEO from '../src/components/SEO';
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
 import { useCart } from '../src/context/CartContext';
 
+
+import { IndustryAccordion } from '../src/components/industry/IndustryAccordion';
+import { SubServiceRow } from '../src/components/industry/SubServiceRow';
+import { RandomServices } from '../src/components/industry/RandomServices';
+
 const ProjectAI: React.FC = () => {
   const { industryId } = useParams<{ industryId: string }>();
   const { addItem } = useCart();
   const [content, setContent] = useState<{ sections: IndustrySection[], services: IndustrySubService[] } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<string>('all');
   const [messages, setMessages] = useState([
     { role: 'bot', content: 'أهلاً بك! أنا مساعد بصيرة الذكي. كيف يمكنني مساعدتك اليوم في أتمتة أعمالك؟' }
   ]);
@@ -32,7 +36,8 @@ const ProjectAI: React.FC = () => {
       id: subService.id,
       type: 'service',
       title: subService.title,
-      price: subService.price || 0,
+      price: Number(subService.price) || 0,
+      quantity: 1
     });
     window.location.hash = '#/checkout';
   };
@@ -75,38 +80,40 @@ const ProjectAI: React.FC = () => {
 
   const hero = content.sections.find(s => s.section_type === 'hero');
   const demo = content.sections.find(s => s.section_type === 'interactive_demo');
+  const serviceSections = content.sections.filter(s => s.section_type !== 'hero' && s.section_type !== 'interactive_demo');
+  const unlinkedServices = content.services.filter(s => !s.section_id);
 
   return (
-    <div className="min-h-screen pt-32 pb-24 px-6 bg-[#0d2226]" dir="rtl">
+    <div className="min-h-screen pt-48 pb-24 px-6 bg-[#0d2226]" dir="rtl">
       <SEO
         title={hero?.title || "مساعدك الشخصي بقدرات خارقة"}
         description={hero?.description || "نظام معالجة لغة طبيعية مخصص للمؤسسات."}
       />
       <div className="max-w-7xl mx-auto">
         {/* Hero Section */}
-        <div className="flex flex-col lg:flex-row items-center gap-16 mb-32">
+        <div className="flex flex-col lg:flex-row items-center gap-16 mb-40">
           <div className="flex-1 space-y-8">
             <div className="inline-flex items-center gap-2 bg-[#1e403a]/30 border border-[#cfd9cc]/20 px-4 py-1.5 rounded-full text-[#cfd9cc] text-xs font-bold uppercase tracking-widest">
               <Bot size={16} /> {hero?.subtitle || "ذكاء اصطناعي سيادي"}
             </div>
-            <h1 className="text-5xl md:text-7xl font-black text-white leading-tight">
+            <h1 className="text-5xl md:text-8xl font-black text-white leading-tight">
               {hero?.title || "مساعدك الشخصي بقدرات خارقة."}
             </h1>
-            <p className="text-xl text-[#cfd9cc]/60 leading-relaxed font-light">
+            <p className="text-xl md:text-2xl text-[#cfd9cc]/60 leading-relaxed font-light">
               {hero?.description}
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link to="/pricing" className="bg-[#cfd9cc] text-[#0d2226] px-8 py-4 rounded-2xl font-black hover:bg-white transition-all shadow-glow">
+            <div className="flex flex-wrap gap-4 pt-6">
+              <Link to="/pricing" className="bg-[#cfd9cc] text-[#0d2226] px-10 py-5 rounded-2xl font-black hover:bg-white transition-all shadow-glow text-lg">
                 عرض باقات AI
               </Link>
-              <button className="glass border-white/10 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/5 transition-all">
+              <button className="glass border-white/10 text-white px-10 py-5 rounded-2xl font-bold hover:bg-white/5 transition-all text-lg">
                 التحدث مع خبير
               </button>
             </div>
           </div>
 
           <div className="flex-1 w-full max-w-2xl">
-            <div className="glass rounded-[40px] border-white/10 overflow-hidden shadow-2xl flex flex-col h-[500px]">
+            <div className="glass rounded-[50px] border-white/10 overflow-hidden shadow-2xl flex flex-col h-[600px] border-2">
               <div className="bg-white/5 p-6 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-red-500/50" />
@@ -118,12 +125,12 @@ const ProjectAI: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 space-y-6">
+              <div className="flex-1 overflow-y-auto p-10 space-y-8 scroll-smooth">
                 {messages.map((msg, i) => (
                   <div key={i} className={`flex ${msg.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                    <div className={`max-w-[80%] p-5 rounded-3xl text-sm leading-relaxed ${msg.role === 'user'
+                    <div className={`max-w-[85%] p-6 rounded-[30px] text-base leading-relaxed ${msg.role === 'user'
                       ? 'bg-white/5 text-[#cfd9cc] rounded-tr-none'
-                      : 'bg-[#1e403a] text-white rounded-tl-none border border-[#cfd9cc]/10'
+                      : 'bg-[#cfd9cc] text-[#0d2226] rounded-tl-none font-bold'
                       }`}>
                       {msg.content}
                     </div>
@@ -131,16 +138,16 @@ const ProjectAI: React.FC = () => {
                 ))}
               </div>
 
-              <form onSubmit={handleSend} className="p-6 bg-white/5 border-t border-white/5 flex gap-4">
+              <form onSubmit={handleSend} className="p-8 bg-white/5 border-t border-white/5 flex gap-4">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="كيف يمكنني مساعدتك اليوم؟..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white outline-none focus:border-[#cfd9cc]/30"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-white outline-none focus:border-[#cfd9cc]/50 transition-all"
                 />
-                <button type="submit" className="bg-[#cfd9cc] text-[#0d2226] p-4 rounded-2xl hover:bg-white transition-all">
-                  <Send size={20} />
+                <button type="submit" className="bg-[#cfd9cc] text-[#0d2226] p-5 rounded-2xl hover:bg-white transition-all shadow-glow">
+                  <Send size={24} />
                 </button>
               </form>
             </div>
@@ -148,81 +155,52 @@ const ProjectAI: React.FC = () => {
         </div>
 
         {/* 3. SECTIONS NAVIGATION & SERVICES */}
-        {(() => {
-          const serviceSections = content.sections.filter(s => s.section_type !== 'hero' && s.section_type !== 'interactive_demo');
-          const unlinkedServices = content.services.filter(s => !s.section_id);
+        <div className="space-y-8 mb-40">
+          {serviceSections.map((section: IndustrySection, idx: number) => {
+            const linkedServices = content.services.filter(s => s.section_id === section.id);
+            if (linkedServices.length === 0 && !section.description) return null;
 
-          return (
-            <>
-              {/* Filter / Nav Pills */}
-              {serviceSections.length > 0 && (
-                <div className="flex flex-wrap gap-4 mb-16 justify-center">
-                  <button
-                    onClick={() => setActiveSection('all')}
-                    className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === 'all' ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
-                  >
-                    عرض الكل
-                  </button>
-                  {serviceSections.map((sec: IndustrySection) => (
-                    <button
-                      key={sec.id}
-                      onClick={() => setActiveSection(sec.id)}
-                      className={`px-8 py-3 rounded-full font-black transition-all ${activeSection === sec.id ? 'bg-[#cfd9cc] text-[#0d2226]' : 'bg-white/5 border border-white/10 text-[#cfd9cc] hover:bg-white/10'}`}
-                    >
-                      {sec.title}
-                    </button>
+            return (
+              <IndustryAccordion
+                key={section.id}
+                section={section}
+                defaultOpen={idx === 0}
+              >
+                <div className="space-y-6">
+                  {linkedServices.map((sub: IndustrySubService) => (
+                    <SubServiceRow
+                      key={sub.id}
+                      sub={sub}
+                      industryId={industryId}
+                      onBuy={handleBuySubService}
+                    />
                   ))}
                 </div>
-              )}
+              </IndustryAccordion>
+            );
+          })}
+        </div>
 
-              {/* Grouped Services By Section */}
-              {serviceSections.map((section: IndustrySection) => {
-                if (activeSection !== 'all' && activeSection !== section.id) return null;
+        {/* Unlinked / General Services */}
+        {unlinkedServices.length > 0 && (
+          <div className="mt-24 mb-40">
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-4xl font-black text-white">إمكانيات ذكاء إضافية</h2>
+              <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
+            </div>
+            <div className="space-y-8">
+              {unlinkedServices.map((sub: IndustrySubService) => (
+                <SubServiceRow
+                  key={sub.id}
+                  sub={sub}
+                  industryId={industryId}
+                  onBuy={handleBuySubService}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
-                const linkedServices = content.services.filter(s => s.section_id === section.id);
-
-                return (
-                  <div key={section.id} className="mb-24 animate-fade-in">
-                    <div className="flex items-center justify-between mb-12">
-                      <h2 className="text-4xl font-black text-white">{section.title}</h2>
-                      <div className="h-px flex-1 mx-8 bg-gradient-to-r from-[#cfd9cc]/20 to-transparent" />
-                    </div>
-                    {section.description && (
-                      <p className="text-xl text-[#cfd9cc]/60 mb-10 leading-relaxed font-light">{section.description}</p>
-                    )}
-
-                    {linkedServices.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {linkedServices.map((sub: IndustrySubService) => (
-                          <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/10">
-                        <p className="text-[#cfd9cc]/40 font-bold">الخدمات قريباً في هذا القسم...</p>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Unlinked / General Services */}
-              {(activeSection === 'all' && unlinkedServices.length > 0) && (
-                <div className="mb-24 animate-fade-in">
-                  <div className="flex items-center justify-between mb-12">
-                    <h2 className="text-4xl font-black text-white">خدمات إضافية متوفرة</h2>
-                    <div className="h-px flex-1 mx-8 bg-gradient-to-r from-white/10 to-transparent" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {unlinkedServices.map((sub: IndustrySubService) => (
-                      <SubServiceCard key={sub.id} sub={sub} industryId={industryId} handleBuySubService={() => handleBuySubService(sub)} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          );
-        })()}
 
         {/* Technical Specs */}
         <div className="glass p-12 md:p-20 rounded-[60px] border-white/5 relative overflow-hidden">
@@ -246,6 +224,9 @@ const ProjectAI: React.FC = () => {
             ))}
           </div>
         </div>
+
+        {/* Bottom Random Services */}
+        <RandomServices />
       </div>
     </div>
   );

@@ -153,7 +153,7 @@ export const Layout: React.FC = () => {
             <ul className="space-y-4 text-[#cfd9cc]/50 text-sm font-bold">
               {footerServices.map((service) => (
                 <li key={service.id} className="hover:text-white transition-luxury flex items-center justify-end gap-2 group">
-                  <Link to={`/project/${service.section_key}`}>{service.title}</Link>
+                  <Link to={`/project/${service.industry_id}`}>{service.title}</Link>
                   <div className="w-1 h-1 bg-[#cfd9cc]/20 rounded-full group-hover:bg-[#cfd9cc] transition-colors" />
                 </li>
               ))}

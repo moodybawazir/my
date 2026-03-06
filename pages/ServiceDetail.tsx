@@ -8,6 +8,8 @@ import {
 import { fetchIndustryContent, IndustrySection, IndustrySubService } from '../src/lib/industryQueries';
 import { ServiceSubscriptions } from '../src/components/subscriptions/ServiceSubscriptions';
 import { useCart } from '../src/context/CartContext';
+import { RandomServices } from '../src/components/industry/RandomServices';
+
 
 const IconMap: any = {
     Building2, BrainCircuit, Coffee, Stethoscope, ShoppingCart, Calculator, Printer, 'real-estate': Building2, 'medical': Stethoscope, 'restaurants': Coffee, 'ai-assistant': BrainCircuit, 'ecommerce': ShoppingCart, 'accounting': Calculator, 'printing-crestalnet': Printer
@@ -303,6 +305,9 @@ const ServiceDetail: React.FC = () => {
                         </>
                     );
                 })()}
+
+                {/* Bottom Random Services */}
+                <RandomServices />
             </div>
         </div>
     );

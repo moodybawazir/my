@@ -24,11 +24,12 @@ const SceneContainer = ({ image }: { image: string }) => {
 
 interface ThreeDViewerProps {
     image: string;
+    className?: string;
 }
 
-const ThreeDViewer: React.FC<ThreeDViewerProps> = ({ image }) => {
+const ThreeDViewer: React.FC<ThreeDViewerProps> = ({ image, className = "" }) => {
     return (
-        <div className="w-full h-[500px] rounded-[30px] overflow-hidden shadow-2xl border border-white/10 relative">
+        <div className={`w-full h-[500px] rounded-[30px] overflow-hidden shadow-2xl border border-white/10 relative ${className}`}>
             <Canvas camera={{ position: [0, 0, 0.1] }}>
                 <Suspense fallback={<Loader />}>
                     <SceneContainer image={image} />

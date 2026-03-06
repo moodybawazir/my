@@ -27,6 +27,7 @@ import Policy from './pages/Policy';
 import ServicePackages from './pages/ServicePackages';
 import AdminSubscriptions from './pages/AdminSubscriptions';
 import { supabase } from './src/lib/supabase';
+import RealEstate3DExperience from './pages/RealEstate3DExperience';
 
 // Component to catch and process Supabase implicit grant hashes (like access_token=...) 
 // when using HashRouter, before it throws a "No routes matched" error.
@@ -156,6 +157,7 @@ const App: React.FC = () => {
                 <Route path="/store/products/:productSlug" element={<StoreProductDetail />} />
 
                 {/* Unified Dynamic Project System */}
+                <Route path="/project/:industryId/3d" element={<RealEstate3DExperience />} />
                 <Route path="/project/:industryId" element={<ProjectIndustrySelector />} />
                 <Route path="/product/:id" element={<ProjectDetail />} />
 
