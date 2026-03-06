@@ -19,14 +19,16 @@ export const IndustryAccordion: React.FC<IndustryAccordionProps> = ({
     return (
         <div className="group border border-white/5 rounded-[40px] overflow-hidden bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-500 relative">
 
-            {/* Background transparent image if exists - positioned absolutely for aesthetic layering */}
-            {section.image_url && isOpen && (
-                <div className="absolute top-0 left-0 w-1/3 h-full opacity-10 pointer-events-none transition-opacity duration-1000">
+            {/* Background Cover Image */}
+            {section.image_url && (
+                <div className="absolute inset-0 overflow-hidden rounded-[40px] pointer-events-none select-none z-0">
                     <img
                         src={section.image_url}
                         alt=""
-                        className="w-full h-full object-contain object-left-top"
+                        className="w-full h-full object-cover opacity-10 group-hover:opacity-20 group-hover:scale-105 transition-all duration-700"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0d2226] via-[#0d2226]/90 to-[#0d2226]/60" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0d2226]/80 to-transparent" />
                 </div>
             )}
 
@@ -59,25 +61,14 @@ export const IndustryAccordion: React.FC<IndustryAccordionProps> = ({
                     <div className="h-px w-full bg-gradient-to-r from-[#cfd9cc]/20 to-transparent mb-10" />
 
                     <div className="flex flex-col lg:flex-row gap-12">
-                        <div className="flex-1">
+                        <div className="flex-1 relative z-10 w-full">
                             {section.description && (
-                                <p className="text-xl text-[#cfd9cc]/60 mb-12 font-light leading-relaxed max-w-4xl drop-shadow-md">
+                                <p className="text-xl text-[#cfd9cc]/60 mb-12 font-light leading-relaxed drop-shadow-md">
                                     {section.description}
                                 </p>
                             )}
                             {children}
                         </div>
-
-                        {/* Right side transparent image for Desktop view */}
-                        {section.image_url && (
-                            <div className="hidden lg:flex w-1/3 justify-center items-center">
-                                <img
-                                    src={section.image_url}
-                                    alt={section.title}
-                                    className="w-full h-auto object-contain max-h-[400px] drop-shadow-[0_0_30px_rgba(207,217,204,0.1)]"
-                                />
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
