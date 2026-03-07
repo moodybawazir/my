@@ -130,9 +130,11 @@ const ServiceDetail: React.FC = () => {
                                     <h2 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight">
                                         {featureToDisplay.title}
                                     </h2>
-                                    <p className="text-xl md:text-2xl text-[#cfd9cc]/60 leading-relaxed font-light mb-12">
-                                        {featureToDisplay.description}
-                                    </p>
+                                    {featureToDisplay.demo_type !== 'three_d' && (
+                                        <p className="text-xl md:text-2xl text-[#cfd9cc]/60 leading-relaxed font-light mb-12">
+                                            {featureToDisplay.description}
+                                        </p>
+                                    )}
                                     <button
                                         onClick={() => navigate(`/project/${serviceId === 'agencies' ? 'agencies' : serviceId}`)}
                                         className="bg-[#cfd9cc] text-[#0d2226] px-12 py-6 rounded-[30px] font-black text-xl hover:bg-white shadow-glow transition-all active:scale-95"
